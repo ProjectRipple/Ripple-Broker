@@ -72,9 +72,7 @@ public class UDPListener extends Observable implements Runnable {
                 // Set this object as having changed
                 this.setChanged();
                 // Build notify argument object
-                UDPListenerObservation notify = new UDPListenerObservation();
-                notify.sender = sockAddr;
-                notify.message = Arrays.copyOf(this.receivePacket.getData(), this.receivePacket.getLength());
+                UDPListenerObservation notify = new UDPListenerObservation(sockAddr,Arrays.copyOf(this.receivePacket.getData(), this.receivePacket.getLength()) );
                 // Notify observers of new data
                 this.notifyObservers(notify);
                 

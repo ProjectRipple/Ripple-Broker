@@ -11,6 +11,25 @@ import java.net.InetSocketAddress;
  * @author james
  */
 public class UDPListenerObservation {
-    public InetSocketAddress sender;
-    public byte[] message;
+    private InetSocketAddress sender;
+    private byte[] message;
+    
+    public UDPListenerObservation(InetSocketAddress sender, byte[] message){
+        this.sender = sender;
+        this.message = message;
+    }
+
+    /**
+     * @return the sender
+     */
+    public InetSocketAddress getSender() {
+        return sender;
+    }
+
+    /**
+     * @return the message
+     */
+    public byte[] getMessage() {
+        return message;
+    }
 }
