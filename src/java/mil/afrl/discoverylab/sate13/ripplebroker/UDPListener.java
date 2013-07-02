@@ -19,7 +19,7 @@ import mil.afrl.discoverylab.sate13.ripplebroker.Reference;
  *
  * @author james
  */
-public class MoteListener implements Runnable {
+public class UDPListener implements Runnable {
 
     private int listenPort;
     private InetAddress address;
@@ -29,7 +29,7 @@ public class MoteListener implements Runnable {
     private static final int RECEIVE_BUF_SIZE = 400;
     private Logger log = Logger.getLogger(Reference.LOGGER_NAME);
 
-    public MoteListener(InetAddress address, int port) {
+    public UDPListener(InetAddress address, int port) {
         this.address = address;
         this.listenPort = port;
         this.setupSocket();

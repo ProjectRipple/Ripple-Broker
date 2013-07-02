@@ -24,7 +24,7 @@ import org.apache.log4j.PropertyConfigurator;
 public class BrokerContextListener implements ServletContextListener {
 
     private ExecutorService executor;
-    private MoteListener task;
+    private UDPListener task;
     private Logger log;
     
     private static final int LISTEN_PORT = 1234;
@@ -37,7 +37,7 @@ public class BrokerContextListener implements ServletContextListener {
         executor = Executors.newSingleThreadExecutor();
         try {
             // listen on anylocal address (:: or 0:0:0:0:0:0:0:0)
-            task = new MoteListener(Inet6Address.getByAddress(new byte[16]), LISTEN_PORT);
+            task = new UDPListener(Inet6Address.getByAddress(new byte[16]), LISTEN_PORT);
         } catch (UnknownHostException ex) {
             log.error("UnknownHostException", ex);
         }
