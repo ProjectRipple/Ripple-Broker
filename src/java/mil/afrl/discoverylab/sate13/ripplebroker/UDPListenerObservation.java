@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package mil.afrl.discoverylab.sate13.ripplebroker;
 
 import java.net.InetSocketAddress;
@@ -11,10 +7,11 @@ import java.net.InetSocketAddress;
  * @author james
  */
 public class UDPListenerObservation {
+
     private InetSocketAddress sender;
     private byte[] message;
-    
-    public UDPListenerObservation(InetSocketAddress sender, byte[] message){
+
+    public UDPListenerObservation(InetSocketAddress sender, byte[] message) {
         this.sender = sender;
         this.message = message;
     }

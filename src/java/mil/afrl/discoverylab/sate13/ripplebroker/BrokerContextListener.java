@@ -1,6 +1,5 @@
 package mil.afrl.discoverylab.sate13.ripplebroker;
 
-import java.io.File;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -120,12 +119,12 @@ public class BrokerContextListener implements ServletContextListener {
                 timestamp = (timestamp << 8);
             }
             timestamp |= (message[4] & 0xff);
-            
+
             log.debug("Overflow count: " + overflowCount);
             log.debug("Timestamp: " + timestamp);
 
             int type = (message[5] & 0xff);
-            
+
             if (type == Reference.SENSOR_PULSE_OX) {
                 // got pulse and blood oxygen message
                 int numPulseOxSamples = (message[6] & 0x00ff);
@@ -161,7 +160,7 @@ public class BrokerContextListener implements ServletContextListener {
             } else if (type == Reference.SENSOR_ECG) {
                 // got ecg reading message
                 int numEcgSamples = (message[6] & 0x00ff);
-                
+
                 int sampleOffsets = (message[7] & 0xff);
                 int[] data = new int[numEcgSamples];
 

@@ -29,7 +29,7 @@ public class QueryServlet extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         Logger log = Logger.getLogger("ripplebrokerlogger");
         log.debug("Processing Request");
         response.setContentType("text/html;charset=UTF-8");
@@ -62,7 +62,7 @@ public class QueryServlet extends HttpServlet {
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         processRequest(request, response);
     }
 
@@ -77,7 +77,7 @@ public class QueryServlet extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+        throws ServletException, IOException {
         processRequest(request, response);
     }
 

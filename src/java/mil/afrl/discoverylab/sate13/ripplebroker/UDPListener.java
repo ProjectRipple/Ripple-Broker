@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package mil.afrl.discoverylab.sate13.ripplebroker;
 
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
@@ -64,22 +60,22 @@ public class UDPListener extends Observable implements Runnable {
                 // Attempt receive
                 this.socket.receive(this.receivePacket);
                 // get sender info from socket address
-                InetSocketAddress sockAddr = ((InetSocketAddress)this.receivePacket.getSocketAddress());
+                InetSocketAddress sockAddr = ((InetSocketAddress) this.receivePacket.getSocketAddress());
                 // Print out info for debugging
-                log.debug("Message from " + sockAddr.getHostString() + " (" + sockAddr.getAddress().toString() + ") " + " Port:" + sockAddr.getPort()) ;
+                log.debug("Message from " + sockAddr.getHostString() + " (" + sockAddr.getAddress().toString() + ") " + " Port:" + sockAddr.getPort());
                 log.debug("Received (" + this.receivePacket.getLength() + ") " + new String(this.receivePacket.getData(), 0, this.receivePacket.getLength()));
-                
+
                 // Set this object as having changed
                 this.setChanged();
                 // Build notify argument object
-                UDPListenerObservation notify = new UDPListenerObservation(sockAddr,Arrays.copyOf(this.receivePacket.getData(), this.receivePacket.getLength()) );
+                UDPListenerObservation notify = new UDPListenerObservation(sockAddr, Arrays.copyOf(this.receivePacket.getData(), this.receivePacket.getLength()));
                 // Notify observers of new data
                 this.notifyObservers(notify);
-                
+
                 // Reset packet length to buffer max
                 this.receivePacket.setLength(this.receiveBuffer.length);
                 // Reset packet buffer
-                Arrays.fill(this.receiveBuffer, (byte)0);
+                Arrays.fill(this.receiveBuffer, (byte) 0);
             }
         } catch (IOException e) {
             log.debug(e);
