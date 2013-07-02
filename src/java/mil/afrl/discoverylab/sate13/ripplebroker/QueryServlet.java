@@ -10,6 +10,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -29,6 +30,8 @@ public class QueryServlet extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        Logger log = Logger.getLogger("ripplebrokerlogger");
+        log.debug("Processing Request");
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
         try {
