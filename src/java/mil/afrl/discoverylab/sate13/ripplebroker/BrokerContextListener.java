@@ -19,6 +19,9 @@ public class BrokerContextListener implements ServletContextListener {
         executor = Executors.newSingleThreadExecutor();
         //task = new MoteListener();
         //executor.submit(task);
+        
+        // TODO: new comment
+        
     }
 
     @Override
