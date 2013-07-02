@@ -4,22 +4,22 @@
  */
 package mil.afrl.discoverylab.sate13.ripplebroker;
 
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.util.Arrays;
+import java.util.Observable;
 import org.apache.log4j.Logger;
-import mil.afrl.discoverylab.sate13.ripplebroker.Reference;
 
 /**
  *
  * @author james
  */
-public class UDPListener implements Runnable {
+public class UDPListener extends Observable implements Runnable {
 
     private int listenPort;
     private InetAddress address;
@@ -68,6 +68,16 @@ public class UDPListener implements Runnable {
                 // Print out info for debugging
                 log.debug("Message from " + sockAddr.getHostString() + " (" + sockAddr.getAddress().toString() + ") " + " Port:" + sockAddr.getPort()) ;
                 log.debug("Received (" + this.receivePacket.getLength() + ") " + new String(this.receivePacket.getData(), 0, this.receivePacket.getLength()));
+                
+                // Set this object as having changed
+                this.setChanged();
+                // Build notify argument object
+                UDPListenerObservation notify = new UDPListenerObservation();
+                notify.sender = sockAddr;
+                notify.message = Arrays.copyOf(this.receivePacket.getData(), this.receivePacket.getLength());
+                // Notify observers of new data
+                this.notifyObservers(notify);
+                
                 // Reset packet length to buffer max
                 this.receivePacket.setLength(this.receiveBuffer.length);
                 // Reset packet buffer

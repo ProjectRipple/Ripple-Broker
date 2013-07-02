@@ -8,6 +8,8 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -38,6 +40,7 @@ public class BrokerContextListener implements ServletContextListener {
         try {
             // listen on anylocal address (:: or 0:0:0:0:0:0:0:0)
             task = new UDPListener(Inet6Address.getByAddress(new byte[16]), LISTEN_PORT);
+            task.addObserver(new testObserver());
         } catch (UnknownHostException ex) {
             log.error("UnknownHostException", ex);
         }
@@ -99,5 +102,19 @@ public class BrokerContextListener implements ServletContextListener {
             java.util.logging.Logger.getLogger(BrokerContextListener.class.getName()).log(Level.SEVERE, null, ex);
         }
         return result;
+    }
+    
+    private class testObserver implements Observer
+    {
+
+        @Override
+        public void update(Observable o, Object arg) {
+            if(o instanceof UDPListener)
+            {
+                UDPListenerObservation observation = (UDPListenerObservation) arg;
+                log.debug("Update called.");
+            }
+        }
+        
     }
 }

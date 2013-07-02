@@ -5,7 +5,7 @@
     </listener>
     <servlet>
         <servlet-name>Query</servlet-name>
-        <servlet-class>mil.afrl.discoverylab.sate13.ripplebroker.QueryServlet</servlet-class>
+        <servlet-class>mil.afrl.discoverylab.sate13.ripplebroker.servlets.QueryServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>Query</servlet-name>
