@@ -5,13 +5,10 @@ import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.logging.Level;
 import javax.servlet.ServletContext;
 import javax.sql.rowset.CachedRowSet;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
@@ -39,7 +36,7 @@ public class DatabaseHelper {
     // logger
     private Logger log = Logger.getLogger(Reference.LOGGER_NAME);
     // lock object
-    private Object lock = new Object();
+    private final Object lock = new Object();
 
     public static DatabaseHelper getInstance(ServletContext servletContext) throws ClassNotFoundException {
         if (instance == null) {

@@ -1,6 +1,7 @@
 package mil.afrl.discoverylab.sate13.ripplebroker;
 
 import java.net.InetSocketAddress;
+import java.util.Date;
 
 /**
  *
@@ -9,24 +10,31 @@ import java.net.InetSocketAddress;
 public class UDPListenerObservation {
 
     private InetSocketAddress sender;
+    private Date receiveTime;
     private byte[] message;
 
-    public UDPListenerObservation(InetSocketAddress sender, byte[] message) {
+    public UDPListenerObservation(InetSocketAddress sender, byte[] message, Date receiveTime) {
         this.sender = sender;
         this.message = message;
+        this.receiveTime = receiveTime;
     }
 
     /**
      * @return the sender
      */
     public InetSocketAddress getSender() {
-        return sender;
+        return this.sender;
     }
 
     /**
      * @return the message
      */
     public byte[] getMessage() {
-        return message;
+        return this.message;
+    }
+    
+    public Date getReceiveTime()
+    {
+        return this.receiveTime;
     }
 }

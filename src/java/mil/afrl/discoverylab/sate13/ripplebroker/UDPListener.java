@@ -8,6 +8,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.channels.DatagramChannel;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Observable;
 import org.apache.log4j.Logger;
 
@@ -68,7 +69,7 @@ public class UDPListener extends Observable implements Runnable {
                 // Set this object as having changed
                 this.setChanged();
                 // Build notify argument object
-                UDPListenerObservation notify = new UDPListenerObservation(sockAddr, Arrays.copyOf(this.receivePacket.getData(), this.receivePacket.getLength()));
+                UDPListenerObservation notify = new UDPListenerObservation(sockAddr, Arrays.copyOf(this.receivePacket.getData(), this.receivePacket.getLength()), new Date());
                 // Notify observers of new data
                 this.notifyObservers(notify);
 
