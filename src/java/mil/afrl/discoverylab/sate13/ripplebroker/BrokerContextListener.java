@@ -40,7 +40,7 @@ public class BrokerContextListener implements ServletContextListener {
     public void contextInitialized(ServletContextEvent sce) {
 
         this.initLogger(sce.getServletContext());
-        
+
         this.initDatabase(sce.getServletContext());
 
         executor = Executors.newSingleThreadExecutor();
@@ -108,18 +108,26 @@ public class BrokerContextListener implements ServletContextListener {
         try {
             DatabaseHelper db = DatabaseHelper.getInstance(servletContext);
             // TODO: remove test code
-//            List<Entry<Reference.tableColumns, String>> entries = new ArrayList<Entry<Reference.tableColumns,String>>();
+//            try {
+//                log.debug(db.patientExists(Inet6Address.getByName("aaaa:0000:0000:0000:0000:0000:1234:0001")));
+//            } catch (UnknownHostException ex) {
+//                log.error("Error", ex);
+//            }
+            
+//            List<Entry<Reference.tableColumns, String>> entries = new ArrayList<Entry<Reference.tableColumns, String>>();
 //            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.FIRST_NAME, "John"));
 //            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.LAST_NAME, "Doe"));
-//            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.IP_ADDR, "aaaa:0000:0000:0000:0000:0000:1234:0001"));
+//            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.IP_ADDR, Inet6Address.getByName("aaaa:0000:0000:0000:0000:0000:1234:0001").getHostAddress()));
 //            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.SEX, "Male"));
 //            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.DOB, Reference.datetimeFormat.format(new Date())));
 //            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.TYPE, "Unknown"));
-//            
+//            db.insertRow(Reference.TABLE_NAMES.PATIENT, entries);
 //            db.insertRow(Reference.TABLE_NAMES.PATIENT, entries);
         } catch (ClassNotFoundException ex) {
             log.error("Error initializing database", ex);
-        }
+        } //catch (UnknownHostException ex) {
+//            log.error("Unknown host", ex);
+//        }
     }
 
     private class testObserver implements Observer {

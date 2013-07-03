@@ -1,5 +1,7 @@
 package mil.afrl.discoverylab.sate13.ripplebroker.db;
 
+import com.sun.rowset.CachedRowSetImpl;
+import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.DriverManager;
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import javax.servlet.ServletContext;
+import javax.sql.rowset.CachedRowSet;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import org.apache.log4j.Logger;
 
@@ -86,17 +89,19 @@ public class DatabaseHelper {
 
     /**
      * Executes a SQL query for a ResultSet
+     *
      * @param query
      * @return result of query
-     * @throws SQLException 
+     * @throws SQLException
      */
-    public ResultSet executeQuery(String query) throws SQLException {
-        ResultSet result = null;
+    public CachedRowSet executeQuery(String query) throws SQLException {
+        CachedRowSet result = null;
         try {
             synchronized (lock) {
                 this.connection = DriverManager.getConnection(this.connectionURI);
                 this.statement = this.connection.createStatement();
-                result = this.statement.executeQuery(query);
+                result = new CachedRowSetImpl();
+                result.populate(this.statement.executeQuery(query));
             }
         } finally {
             this.closeDatabase();
@@ -106,16 +111,17 @@ public class DatabaseHelper {
 
     /**
      * Executes a SQL query for no result
+     *
      * @param query
-     * @throws SQLException 
+     * @throws SQLException
      */
     public void execute(String query) throws SQLException {
         try {
-        synchronized (lock) {
-            this.connection = DriverManager.getConnection(this.connectionURI);
-            this.statement = this.connection.createStatement();
-            this.statement.execute(query);
-        }
+            synchronized (lock) {
+                this.connection = DriverManager.getConnection(this.connectionURI);
+                this.statement = this.connection.createStatement();
+                this.statement.execute(query);
+            }
         } finally {
             this.closeDatabase();
         }
@@ -138,6 +144,21 @@ public class DatabaseHelper {
         } catch (SQLException ex) {
             log.error("Error with inserting row.\nQuery String" + query, ex);
         }
+    }
+
+    public boolean patientExists(InetAddress address) {
+        boolean result = false;
+        String query = "SELECT COUNT(*) as count FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
+        log.debug("Patient exists query: " + query);
+        try {
+            CachedRowSet rowset = this.executeQuery(query);
+            rowset.last();
+            result = (rowset.getInt("count") == 0) ? false : true;
+            rowset.close();
+        } catch (SQLException ex) {
+            log.error("Failed checking for patient in table.",ex);
+        }
+        return result;
     }
 
     /**
