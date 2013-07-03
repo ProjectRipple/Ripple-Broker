@@ -88,7 +88,7 @@ public class UDPListener extends Observable implements Runnable {
     }
 
     public void stop() {
-        log.debug("Stopping MoteListener.");
+        log.debug("Stopping UDPListener.");
         // close socket
         this.socket.close();
     }

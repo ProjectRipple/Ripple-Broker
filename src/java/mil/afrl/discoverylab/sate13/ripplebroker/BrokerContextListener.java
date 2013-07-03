@@ -5,8 +5,13 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ExecutorService;
@@ -101,7 +106,17 @@ public class BrokerContextListener implements ServletContextListener {
 
     private void initDatabase(ServletContext servletContext) {
         try {
-            DatabaseHelper.getInstance(servletContext);
+            DatabaseHelper db = DatabaseHelper.getInstance(servletContext);
+            // TODO: remove test code
+//            List<Entry<Reference.tableColumns, String>> entries = new ArrayList<Entry<Reference.tableColumns,String>>();
+//            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.FIRST_NAME, "John"));
+//            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.LAST_NAME, "Doe"));
+//            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.IP_ADDR, "aaaa:0000:0000:0000:0000:0000:1234:0001"));
+//            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.SEX, "Male"));
+//            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.DOB, Reference.datetimeFormat.format(new Date())));
+//            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.TYPE, "Unknown"));
+//            
+//            db.insertRow(Reference.TABLE_NAMES.PATIENT, entries);
         } catch (ClassNotFoundException ex) {
             log.error("Error initializing database", ex);
         }

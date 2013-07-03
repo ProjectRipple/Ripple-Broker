@@ -6,6 +6,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import javax.servlet.ServletContext;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
@@ -67,46 +70,96 @@ public class DatabaseHelper {
 
     private void createTables() {
         try {
-            this.connection = DriverManager.getConnection(this.connectionURI);
-            this.statement = this.connection.createStatement();
-            this.statement.execute(Reference.PATIENT_TABLE_CREATE);
-            this.statement.execute(Reference.VITALS_TABLE_CREATE);
+            synchronized (lock) {
+                this.connection = DriverManager.getConnection(this.connectionURI);
+                this.statement = this.connection.createStatement();
+                this.statement.execute(Reference.PATIENT_TABLE_CREATE);
+                this.statement.execute(Reference.VITALS_TABLE_CREATE);
+            }
         } catch (SQLException ex) {
             log.error("Problem creating database tables.", ex);
         } finally {
             this.closeDatabase();
         }
+
     }
 
-    private void executeQuery(String query) throws SQLException {
+    /**
+     * Executes a SQL query for a ResultSet
+     * @param query
+     * @return result of query
+     * @throws SQLException 
+     */
+    private ResultSet executeQuery(String query) throws SQLException {
+        ResultSet result = null;
         try {
+            synchronized (lock) {
+                this.connection = DriverManager.getConnection(this.connectionURI);
+                this.statement = this.connection.createStatement();
+                result = this.statement.executeQuery(query);
+            }
+        } finally {
+            this.closeDatabase();
+        }
+        return result;
+    }
+
+    /**
+     * Executes a SQL query for no result
+     * @param query
+     * @throws SQLException 
+     */
+    private void execute(String query) throws SQLException {
+        try {
+        synchronized (lock) {
             this.connection = DriverManager.getConnection(this.connectionURI);
             this.statement = this.connection.createStatement();
-            this.executeQuery(query);
+            this.statement.execute(query);
+        }
         } finally {
             this.closeDatabase();
         }
     }
-    
+
+    public void insertRow(Reference.TABLE_NAMES table, List<Entry<Reference.tableColumns, String>> values) {
+        String query = "INSERT INTO " + table.toString().toLowerCase();
+        String columnsString = " ";
+        String valuesString = " ";
+
+        for (Entry<Reference.tableColumns, String> entry : values) {
+            columnsString += entry.getKey().toString().toLowerCase() + ",";
+            valuesString += "'" + entry.getValue() + "'" + ",";
+        }
+        query += " (" + columnsString.substring(0, columnsString.length() - 1) + ") ";
+        query += " VALUES(" + valuesString.substring(0, valuesString.length() - 1) + ");";
+//        log.debug(query);
+        try {
+            this.execute(query);
+        } catch (SQLException ex) {
+            log.error("Error with inserting row.\nQuery String" + query, ex);
+        }
+    }
 
     /**
      * Close database connection
      */
     private void closeDatabase() {
-        try {
-            if (resultSet != null) {
-                resultSet.close();
-            }
+        synchronized (lock) {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
 
-            if (statement != null) {
-                statement.close();
-            }
+                if (statement != null) {
+                    statement.close();
+                }
 
-            if (connection != null) {
-                connection.close();
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (Exception e) {
+                // Do not allow exception to propagate
             }
-        } catch (Exception e) {
-            // Do not allow exception to propagate
         }
     }
 

@@ -4,7 +4,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 /**
- *
+ * Class to automatically update database based on updates from observable listeners
  * @author james
  */
 public class DatabaseMessageListener implements Observer {
