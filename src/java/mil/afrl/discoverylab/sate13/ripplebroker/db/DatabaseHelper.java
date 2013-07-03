@@ -90,7 +90,7 @@ public class DatabaseHelper {
      * @return result of query
      * @throws SQLException 
      */
-    private ResultSet executeQuery(String query) throws SQLException {
+    public ResultSet executeQuery(String query) throws SQLException {
         ResultSet result = null;
         try {
             synchronized (lock) {
@@ -109,7 +109,7 @@ public class DatabaseHelper {
      * @param query
      * @throws SQLException 
      */
-    private void execute(String query) throws SQLException {
+    public void execute(String query) throws SQLException {
         try {
         synchronized (lock) {
             this.connection = DriverManager.getConnection(this.connectionURI);

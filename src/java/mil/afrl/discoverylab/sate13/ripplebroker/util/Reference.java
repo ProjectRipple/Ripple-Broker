@@ -10,14 +10,39 @@ public class Reference {
 
     public static final String LOGGER_NAME = "ripplebrokerlogger";
     //Sensor constants
-    public static final int SENSOR_PULSE_OX = 0;
-    public static final int SENSOR_ECG = 1;
-    public static final int SENSOR_TEMPERATURE = 2;
+
+    public enum SENSOR_TYPES {
+
+        SENSOR_PULSE_OX(0), SENSOR_ECG(1), SENSOR_TEMPERATURE(2);
+        private final int id;
+
+        SENSOR_TYPES(int id) {
+            this.id = id;
+        }
+
+        public int getValue() {
+            return id;
+        }
+    };
     // Sensor table names and values
-    public enum TABLE_NAMES{PATIENT, VITALS};
-    public interface tableColumns{};
-    public enum PATIENT_TABLE_COLUMNS implements tableColumns{ID, IP_ADDR, FIRST_NAME, LAST_NAME, SSN, DOB, SEX, NBC_CONTAMINATION, TYPE};
-    public enum VITALS_TABLE_COLUMNS implements tableColumns{VID, PID, SERVER_TIMESTAMP, SENSOR_TIMESTAMP, SENSOR_TYPE, VALUE_TYPE, VALUE};
+
+    public enum TABLE_NAMES {
+
+        PATIENT, VITALS
+    };
+
+    public interface tableColumns {
+    };
+
+    public enum PATIENT_TABLE_COLUMNS implements tableColumns {
+
+        ID, IP_ADDR, FIRST_NAME, LAST_NAME, SSN, DOB, SEX, NBC_CONTAMINATION, TYPE
+    };
+
+    public enum VITALS_TABLE_COLUMNS implements tableColumns {
+
+        VID, PID, SERVER_TIMESTAMP, SENSOR_TIMESTAMP, SENSOR_TYPE, VALUE_TYPE, VALUE
+    };
     public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
     public static final SimpleDateFormat datetimeFormat = new SimpleDateFormat(DATE_TIME_FORMAT);
     // database table structures

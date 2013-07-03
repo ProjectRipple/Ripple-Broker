@@ -151,7 +151,7 @@ public class BrokerContextListener implements ServletContextListener {
 
             int type = (message[5] & 0xff);
 
-            if (type == Reference.SENSOR_PULSE_OX) {
+            if (type == Reference.SENSOR_TYPES.SENSOR_PULSE_OX.getValue()) {
                 // got pulse and blood oxygen message
                 int numPulseOxSamples = (message[6] & 0x00ff);
 
@@ -172,7 +172,7 @@ public class BrokerContextListener implements ServletContextListener {
 
                 log.debug("Pulse (BPM): " + pulse);
                 log.debug("Blood oxygen: " + bloodOx);
-            } else if (type == Reference.SENSOR_TEMPERATURE) {
+            } else if (type == Reference.SENSOR_TYPES.SENSOR_TEMPERATURE.getValue()) {
                 // got temperature reading message
                 int numTemperatureSamples = (message[6] & 0x00ff);
 
@@ -183,7 +183,7 @@ public class BrokerContextListener implements ServletContextListener {
                 log.debug("Num samples: " + numTemperatureSamples);
                 log.debug("Temperature: " + temperature);
 
-            } else if (type == Reference.SENSOR_ECG) {
+            } else if (type == Reference.SENSOR_TYPES.SENSOR_ECG.getValue()) {
                 // got ecg reading message
                 int numEcgSamples = (message[6] & 0x00ff);
 
