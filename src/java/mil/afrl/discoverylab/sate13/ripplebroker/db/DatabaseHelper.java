@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import javax.servlet.ServletContext;
 import javax.sql.rowset.CachedRowSet;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
@@ -124,12 +125,12 @@ public class DatabaseHelper {
         }
     }
 
-    public void insertRow(Reference.TABLE_NAMES table, List<Entry<Reference.tableColumns, String>> values) {
+    public void insertRow(Reference.TABLE_NAMES table, List<Entry<Reference.TableColumns, String>> values) {
         String query = "INSERT INTO " + table.toString().toLowerCase();
         String columnsString = " ";
         String valuesString = " ";
 
-        for (Entry<Reference.tableColumns, String> entry : values) {
+        for (Entry<Reference.TableColumns, String> entry : values) {
             columnsString += entry.getKey().toString().toLowerCase() + ",";
             valuesString += "'" + entry.getValue() + "'" + ",";
         }
@@ -154,6 +155,23 @@ public class DatabaseHelper {
             rowset.close();
         } catch (SQLException ex) {
             log.error("Failed checking for patient in table.",ex);
+        }
+        return result;
+    }
+    
+    public int getPatientId(InetAddress address)
+    {
+        int result = -1;
+        String query = "SELECT id FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
+        log.debug("Patient Id query: " + query);
+        try {
+            CachedRowSet rowset = this.executeQuery(query);
+            rowset.last();
+            result = rowset.getInt("id");
+            rowset.close();
+        } catch (SQLException ex) {
+            log.error("Failed checking for patient id table.", ex);
+            result = -1;
         }
         return result;
     }

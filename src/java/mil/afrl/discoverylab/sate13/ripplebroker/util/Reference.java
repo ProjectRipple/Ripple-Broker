@@ -24,6 +24,21 @@ public class Reference {
             return id;
         }
     };
+    // Vital constants
+    public enum VITAL_TYPES {
+
+        VITAL_PULSE(0), VITAL_ECG(1), VITAL_TEMPERATURE(2), VITAL_BLOOD_OX(3);
+        private final int id;
+
+        VITAL_TYPES(int id) {
+            this.id = id;
+        }
+
+        public int getValue() {
+            return id;
+        }
+    };
+    
     // Sensor table names and values
 
     public enum TABLE_NAMES {
@@ -31,15 +46,15 @@ public class Reference {
         PATIENT, VITALS
     };
 
-    public interface tableColumns {
+    public interface TableColumns {
     };
 
-    public enum PATIENT_TABLE_COLUMNS implements tableColumns {
+    public enum PATIENT_TABLE_COLUMNS implements TableColumns {
 
         ID, IP_ADDR, FIRST_NAME, LAST_NAME, SSN, DOB, SEX, NBC_CONTAMINATION, TYPE
     };
 
-    public enum VITALS_TABLE_COLUMNS implements tableColumns {
+    public enum VITALS_TABLE_COLUMNS implements TableColumns {
 
         VID, PID, SERVER_TIMESTAMP, SENSOR_TIMESTAMP, SENSOR_TYPE, VALUE_TYPE, VALUE
     };
