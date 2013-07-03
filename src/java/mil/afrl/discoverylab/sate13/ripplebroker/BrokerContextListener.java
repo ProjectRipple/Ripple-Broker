@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -34,6 +35,8 @@ public class BrokerContextListener implements ServletContextListener {
     public void contextInitialized(ServletContextEvent sce) {
 
         this.initLogger(sce.getServletContext());
+        
+        this.initDatabase(sce.getServletContext());
 
         executor = Executors.newSingleThreadExecutor();
         try {
@@ -94,6 +97,14 @@ public class BrokerContextListener implements ServletContextListener {
             java.util.logging.Logger.getLogger(BrokerContextListener.class.getName()).log(Level.SEVERE, null, ex);
         }
         return result;
+    }
+
+    private void initDatabase(ServletContext servletContext) {
+        try {
+            DatabaseHelper.getInstance(servletContext);
+        } catch (ClassNotFoundException ex) {
+            log.error("Error initializing database", ex);
+        }
     }
 
     private class testObserver implements Observer {

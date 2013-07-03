@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+    <context-param>
+        <param-name>database.host</param-name>
+        <param-value>localhost</param-value>
+    </context-param>
+    <context-param>
+        <param-name>database.port</param-name>
+        <param-value>3306</param-value>
+    </context-param>
+    <context-param>
+        <param-name>database.name</param-name>
+        <param-value>ripple</param-value>
+    </context-param>
+    <context-param>
+        <param-name>database.user</param-name>
+        <param-value>root</param-value>
+    </context-param>
+    <context-param>
+        <param-name>database.password</param-name>
+        <param-value>password</param-value>
+    </context-param>
     <listener>
         <listener-class>mil.afrl.discoverylab.sate13.ripplebroker.BrokerContextListener</listener-class>
     </listener>
