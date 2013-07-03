@@ -28,7 +28,7 @@ public class BrokerContextListener implements ServletContextListener {
     private ExecutorService executor;
     private UDPListener task;
     private Logger log;
-    private static final int LISTEN_PORT = 1234;
+    private static final int LISTEN_PORT = 3001;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
