@@ -52,6 +52,7 @@ public class BrokerContextListener implements ServletContextListener {
             // listen on anylocal address (:: or 0:0:0:0:0:0:0:0)
             task = new UDPListener(Inet6Address.getByAddress(new byte[16]), Config.LISTEN_PORT);
             if (Config.AUTO_DATABASE_INSERT) {
+                log.info("Enabling auto database insert.");
                 task.addObserver(new DatabaseMessageListener());
             }
         } catch (UnknownHostException ex) {
@@ -66,8 +67,20 @@ public class BrokerContextListener implements ServletContextListener {
     private void initConfig(ServletContext ctx)
     {
         Config.LOGGER_NAME = ctx.getInitParameter("logger.name");
+        if(Config.LOGGER_NAME == null){
+            Config.LOGGER_NAME = "ripplebrokerlogger";
+            System.out.println("Error: Logger name init parameter is null.");
+            System.out.println("Falling back to default value: " + Config.LOGGER_NAME);
+        }
         
-        Config.LISTEN_PORT = Integer.parseInt(ctx.getInitParameter("motelisten.port"));
+        try{
+            Config.LISTEN_PORT = Integer.parseInt(ctx.getInitParameter("motelisten.port"));
+        } catch(NumberFormatException ne){
+            System.out.println("Error: Listen port init parameter is not an integer. Parameter=" + ctx.getInitParameter("motelisten.port"));
+            Config.LISTEN_PORT = 1234;
+            System.out.println("Falling back to default port " + Config.LISTEN_PORT);
+        }
+        
         
         Config.AUTO_DATABASE_INSERT = Boolean.parseBoolean(ctx.getInitParameter("database.autoinsert"));
     }
@@ -83,7 +96,7 @@ public class BrokerContextListener implements ServletContextListener {
 
         if (file != null) {
             PropertyConfigurator.configure(prefix + file);
-            log = Logger.getLogger("ripplebrokerlogger");
+            log = Logger.getLogger(Config.LOGGER_NAME);
             log.debug("Log4J Logging started for application: " + prefix + file);
 
         } else {
