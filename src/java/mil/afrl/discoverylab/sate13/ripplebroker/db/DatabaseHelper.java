@@ -1,6 +1,6 @@
 package mil.afrl.discoverylab.sate13.ripplebroker.db;
 
-import com.sun.rowset.CachedRowSetImpl;
+
 import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.Statement;
@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import javax.servlet.ServletContext;
 import javax.sql.rowset.CachedRowSet;
+import javax.sql.rowset.RowSetProvider;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import org.apache.log4j.Logger;
 
@@ -102,7 +103,8 @@ public class DatabaseHelper {
             synchronized (lock) {
                 this.connection = DriverManager.getConnection(this.connectionURI);
                 this.statement = this.connection.createStatement();
-                result = new CachedRowSetImpl();
+                // Use rowset provider to remove JRE implementation dependence
+                result = RowSetProvider.newFactory().createCachedRowSet();
                 result.populate(this.statement.executeQuery(query));
             }
         } finally {

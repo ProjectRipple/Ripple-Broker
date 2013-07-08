@@ -126,12 +126,12 @@ public class BrokerContextListener implements ServletContextListener {
             }
 
             List<Entry<Reference.TableColumns, String>> entries = new ArrayList<Entry<Reference.TableColumns, String>>();
-            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.FIRST_NAME, "John"));
-            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.LAST_NAME, "Doe"));
-            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.IP_ADDR, Inet6Address.getByName("aaaa:0000:0000:0000:0000:0000:1234:0001").getHostAddress()));
-            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.SEX, "Male"));
-            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.DOB, Reference.datetimeFormat.format(new Date())));
-            entries.add(new SimpleEntry(Reference.PATIENT_TABLE_COLUMNS.TYPE, "Unknown"));
+            entries.add(new SimpleEntry<Reference.TableColumns, String>(Reference.PATIENT_TABLE_COLUMNS.FIRST_NAME, "John"));
+            entries.add(new SimpleEntry<Reference.TableColumns, String>(Reference.PATIENT_TABLE_COLUMNS.LAST_NAME, "Doe"));
+            entries.add(new SimpleEntry<Reference.TableColumns, String>(Reference.PATIENT_TABLE_COLUMNS.IP_ADDR, Inet6Address.getByName("aaaa:0000:0000:0000:0000:0000:1234:0001").getHostAddress()));
+            entries.add(new SimpleEntry<Reference.TableColumns, String>(Reference.PATIENT_TABLE_COLUMNS.SEX, "Male"));
+            entries.add(new SimpleEntry<Reference.TableColumns, String>(Reference.PATIENT_TABLE_COLUMNS.DOB, Reference.datetimeFormat.format(new Date())));
+            entries.add(new SimpleEntry<Reference.TableColumns, String>(Reference.PATIENT_TABLE_COLUMNS.TYPE, "Unknown"));
             db.insertRow(Reference.TABLE_NAMES.PATIENT, entries);
             db.insertRow(Reference.TABLE_NAMES.PATIENT, entries);
 
