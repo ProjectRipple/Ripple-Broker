@@ -21,7 +21,6 @@ public class RippleMoteMessage {
     private Reference.SENSOR_TYPES sensorType;
     private List<RippleData> data;
     private static Logger log = Logger.getLogger(Config.LOGGER_NAME);
-    
     // Index constants
     private static final int INDEX_TIMESTAMP_START = 1;
     private static final int INDEX_TIMESTAMP_END = 4;
@@ -34,13 +33,23 @@ public class RippleMoteMessage {
     private static final int INDEX_ECG_START = 8;
     private static final int INDEX_ECG_OFFSET = 7;
     private static final int INDEX_TEMPERATURE = 7;
+    // Size (in bytes) of data
+    private static final int SIZE_OVERFLOW_COUNT = 1;
+    private static final int SIZE_TIMESTAMP = 4;
+    private static final int SIZE_SENSOR_TYPE = 1;
+    private static final int SIZE_SAMPLE_COUNT = 1;
+    private static final int SIZE_PULSE = 2;
+    private static final int SIZE_BLOOD_OX = 1;
+    private static final int SIZE_ECG_OFFSET = 1;
+    private static final int SIZE_ECG_DATA = 2;
+    private static final int SIZE_TEMPERATURE = 1;
 
     public static RippleMoteMessage parse(UDPListenerObservation obs) {
-        
+
         RippleMoteMessage result = new RippleMoteMessage();
         byte[] message = obs.getMessage();
         List<RippleData> tData = new ArrayList<RippleData>();
-        
+
         int overflowCount = (message[INDEX_OVERFLOW_COUNT] & 0xff);
         long timestamp = 0;
         int pulse = 0;
@@ -49,13 +58,13 @@ public class RippleMoteMessage {
 
         result.senderAddress = obs.getSender();
         result.overflowCount = overflowCount;
-        
+
         for (int i = INDEX_TIMESTAMP_START; i < INDEX_TIMESTAMP_END; i++) {
             timestamp |= (message[i] & 0xff);
             timestamp = (timestamp << 8);
         }
         timestamp |= (message[INDEX_TIMESTAMP_END] & 0xff);
-        
+
         result.timestamp = timestamp;
         result.systemTime = obs.getReceiveTime();
 
@@ -71,38 +80,42 @@ public class RippleMoteMessage {
             int numPulseOxSamples = (message[INDEX_SAMPLE_COUNT] & 0x00ff);
 
             // heart rate
-
-            // TODO: iterate through multiple samples(if provided)
-            pulse |= (message[INDEX_PULSE_START] & 0xff);
-            pulse = (pulse << 8) | (message[INDEX_PULSE_END] & 0xff);
-
-
-            // blood oxygen
-            bloodOx = (message[INDEX_BLOOD_OX] & 0xff);
-            
-            // add point to list
-            tData.add(new PulseOxData(pulse, bloodOx));
-
             log.debug("Reported pulse and blood oxygen:");
             log.debug("Num samples: " + numPulseOxSamples);
 
-            log.debug("Pulse (BPM): " + pulse);
-            log.debug("Blood oxygen: " + bloodOx);
+
+            // iterate through multiple samples(if provided)
+            for (int i = 0, j = INDEX_PULSE_START; i < numPulseOxSamples; i++, j += SIZE_PULSE + SIZE_BLOOD_OX) {
+                pulse |= (message[j] & 0xff);
+                pulse = (pulse << 8) | (message[j + 1] & 0xff);
+
+                // blood oxygen
+                bloodOx = (message[j + 2] & 0xff);
+
+                // add point to list
+                tData.add(new PulseOxData(pulse, bloodOx));
+                log.debug("Pulse (BPM): " + pulse);
+                log.debug("Blood oxygen: " + bloodOx);
+            }
+
+
         } else if (type == Reference.SENSOR_TYPES.SENSOR_TEMPERATURE.getValue()) {
             // Set sensor type
             result.sensorType = SENSOR_TYPES.SENSOR_TEMPERATURE;
             // got temperature reading message
             int numTemperatureSamples = (message[INDEX_SAMPLE_COUNT] & 0x00ff);
 
-            // TODO: iterate through multiple samples(if provided)
-            temperature = (message[INDEX_TEMPERATURE] & 0x00ff);
-
-            // Add point to list
-            tData.add(new TemperatureData(temperature));
-            
             log.debug("Reported temperature:");
             log.debug("Num samples: " + numTemperatureSamples);
-            log.debug("Temperature: " + temperature);
+            // iterate through multiple samples(if provided)
+            for (int i = 0, j = INDEX_TEMPERATURE; i < numTemperatureSamples; i++, j += SIZE_TEMPERATURE) {
+                temperature = (message[j] & 0x00ff);
+
+                // Add point to list
+                tData.add(new TemperatureData(temperature));
+                log.debug("Temperature: " + temperature);
+            }
+
 
         } else if (type == Reference.SENSOR_TYPES.SENSOR_ECG.getValue()) {
             // Set sensor type
@@ -116,11 +129,11 @@ public class RippleMoteMessage {
             log.debug("Reported ECG:");
             log.debug("Offset is " + sampleOffsets + " ms");
 
-            for (int i = 0, buf_count = INDEX_ECG_START; i < numEcgSamples; i++, buf_count += 2) {
+            for (int i = 0, buf_count = INDEX_ECG_START; i < numEcgSamples; i++, buf_count += SIZE_ECG_DATA) {
                 data[i] |= (message[buf_count] & 0xff);
                 data[i] = (data[i] << 8) | (message[buf_count + 1] & 0xff);
-                
-                tData.add(new ECGData(data[i]));
+
+                tData.add(new ECGData(sampleOffsets, data[i]));
                 log.debug("Data: " + data[i]);
             }
 
@@ -174,14 +187,13 @@ public class RippleMoteMessage {
     public List<RippleData> getData() {
         return data;
     }
-    
 
     // Container classes for data points
-    
-    public interface RippleData{};
-    
-    public static class PulseOxData implements RippleData
-    {
+    public interface RippleData {
+    };
+
+    public static class PulseOxData implements RippleData {
+
         public int pulse;
         public int bloodOxygen;
 
@@ -190,24 +202,24 @@ public class RippleMoteMessage {
             this.bloodOxygen = bloodOx;
         }
     }
-    
-    public static class TemperatureData implements RippleData
-    {
+
+    public static class TemperatureData implements RippleData {
+
         public int temperature;
-        
-        public TemperatureData(int temperature)
-        {
+
+        public TemperatureData(int temperature) {
             this.temperature = temperature;
         }
     }
-    
-    public static class ECGData implements RippleData
-    {
+
+    public static class ECGData implements RippleData {
+
         public int adcReading;
-        
-        public ECGData(int adcReading)
-        {
+        public int sampleOffsets;
+
+        public ECGData(int sampleOffsets, int adcReading) {
             this.adcReading = adcReading;
+            this.sampleOffsets = sampleOffsets;
         }
     }
 }
