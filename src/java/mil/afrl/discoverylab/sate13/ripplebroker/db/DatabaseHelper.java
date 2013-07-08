@@ -9,7 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.logging.Level;
 import javax.servlet.ServletContext;
 import javax.sql.rowset.CachedRowSet;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
@@ -39,7 +38,7 @@ public class DatabaseHelper {
     // lock object
     private final Object lock = new Object();
 
-    public static DatabaseHelper getInstance(ServletContext servletContext) throws ClassNotFoundException {
+    public static DatabaseHelper getInstance(ServletContext servletContext){
         if (instance == null) {
             if (servletContext != null) {
                 instance = new DatabaseHelper(servletContext);
@@ -50,7 +49,7 @@ public class DatabaseHelper {
         return instance;
     }
 
-    private DatabaseHelper(ServletContext context) throws ClassNotFoundException {
+    private DatabaseHelper(ServletContext context){
         // get database parameters
         // TODO: trust that they exist for now
         this.databaseHost = context.getInitParameter("database.host");
@@ -61,10 +60,15 @@ public class DatabaseHelper {
 
         // create connection URI
         this.connectionURI = "jdbc:mysql://" + databaseHost + ":" + databasePort + "/" + databaseName + "?user=" + databaseUser + "&password=" + databasePassword;
+        try {
+            // load MySQL driver
+            Class.forName("com.mysql.jdbc.Driver");
+        } catch (ClassNotFoundException ex) {
+            log.error("Failed to load JDBC driver", ex);
+            throw new RuntimeException("Failed to load JDBC driver.", ex);
+        }
 
-        // load MySQL driver
-        Class.forName("com.mysql.jdbc.Driver");
-
+        // Make sure tables exist
         this.createTables();
 
     }

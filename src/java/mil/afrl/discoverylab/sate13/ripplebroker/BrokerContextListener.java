@@ -110,11 +110,9 @@ public class BrokerContextListener implements ServletContextListener {
     }
 
     private void initDatabase(ServletContext servletContext) {
-        try {
-            DatabaseHelper db = DatabaseHelper.getInstance(servletContext);
-        } catch (ClassNotFoundException ex) {
-            log.error("Error initializing database", ex);
-        }
+
+        DatabaseHelper db = DatabaseHelper.getInstance(servletContext);
+
     }
 
     private void testDatabase() {
@@ -139,10 +137,6 @@ public class BrokerContextListener implements ServletContextListener {
 
         } catch (UnknownHostException ex) {
             log.error("Unknown host", ex);
-        } catch (ClassNotFoundException ex) {
-            log.error("Class not found database helper", ex);
-        }
+        } 
     }
-
-   
 }
