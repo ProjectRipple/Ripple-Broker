@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import javax.servlet.ServletContext;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetProvider;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import org.apache.log4j.Logger;
 
@@ -35,7 +36,7 @@ public class DatabaseHelper {
     private Statement statement = null;
     private ResultSet resultSet = null;
     // logger
-    private Logger log = Logger.getLogger(Reference.LOGGER_NAME);
+    private Logger log = Logger.getLogger(Config.LOGGER_NAME);
     // lock object
     private final Object lock = new Object();
 
@@ -103,7 +104,7 @@ public class DatabaseHelper {
             synchronized (lock) {
                 this.connection = DriverManager.getConnection(this.connectionURI);
                 this.statement = this.connection.createStatement();
-                // Use rowset provider to remove JRE implementation dependence
+                // Use rowset provider to remove JRE implementation dependence in code
                 result = RowSetProvider.newFactory().createCachedRowSet();
                 result.populate(this.statement.executeQuery(query));
             }
@@ -191,11 +192,19 @@ public class DatabaseHelper {
                 if (resultSet != null) {
                     resultSet.close();
                 }
+            } catch (Exception e) {
+                // Do not allow exception to propagate
+            }
 
+            try {
                 if (statement != null) {
                     statement.close();
                 }
+            } catch (Exception e) {
+                // Do not allow exception to propagate
+            }
 
+            try {
                 if (connection != null) {
                     connection.close();
                 }

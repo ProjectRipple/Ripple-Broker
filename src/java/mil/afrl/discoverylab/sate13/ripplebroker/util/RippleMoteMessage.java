@@ -20,7 +20,7 @@ public class RippleMoteMessage {
     private Date systemTime;
     private Reference.SENSOR_TYPES sensorType;
     private List<RippleData> data;
-    private static Logger log = Logger.getLogger(Reference.LOGGER_NAME);
+    private static Logger log = Logger.getLogger(Config.LOGGER_NAME);
     
     // Index constants
     private static final int INDEX_TIMESTAMP_START = 1;

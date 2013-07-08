@@ -6,7 +6,10 @@ package mil.afrl.discoverylab.sate13.ripplebroker.util;
  */
 public class Config {
     
-    public static final boolean AUTO_DATABASE_INSERT = false;
+    public static boolean AUTO_DATABASE_INSERT = false;
+    public static int LISTEN_PORT;
+    public static String LOGGER_NAME = "ripplebrokerlogger";
+
     
     
 }

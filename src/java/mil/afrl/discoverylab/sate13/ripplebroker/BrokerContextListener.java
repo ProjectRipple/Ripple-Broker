@@ -37,11 +37,12 @@ public class BrokerContextListener implements ServletContextListener {
     private ExecutorService executor;
     private UDPListener task;
     private Logger log;
-    private static final int LISTEN_PORT = 1234;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
 
+        this.initConfig(sce.getServletContext());
+        
         this.initLogger(sce.getServletContext());
 
         this.initDatabase(sce.getServletContext());
@@ -49,7 +50,7 @@ public class BrokerContextListener implements ServletContextListener {
         executor = Executors.newSingleThreadExecutor();
         try {
             // listen on anylocal address (:: or 0:0:0:0:0:0:0:0)
-            task = new UDPListener(Inet6Address.getByAddress(new byte[16]), LISTEN_PORT);
+            task = new UDPListener(Inet6Address.getByAddress(new byte[16]), Config.LISTEN_PORT);
             if (Config.AUTO_DATABASE_INSERT) {
                 task.addObserver(new DatabaseMessageListener());
             }
@@ -60,6 +61,15 @@ public class BrokerContextListener implements ServletContextListener {
 
         log.debug("Context Initialized");
 
+    }
+    
+    private void initConfig(ServletContext ctx)
+    {
+        Config.LOGGER_NAME = ctx.getInitParameter("logger.name");
+        
+        Config.LISTEN_PORT = Integer.parseInt(ctx.getInitParameter("motelisten.port"));
+        
+        Config.AUTO_DATABASE_INSERT = Boolean.parseBoolean(ctx.getInitParameter("database.autoinsert"));
     }
 
     private void initLogger(ServletContext ctx) {

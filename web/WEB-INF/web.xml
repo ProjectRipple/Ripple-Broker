@@ -20,6 +20,21 @@
         <param-name>database.password</param-name>
         <param-value>password</param-value>
     </context-param>
+    <context-param>
+        <description>Port for program to listen on for ripple messages</description>
+        <param-name>motelisten.port</param-name>
+        <param-value>1234</param-value>
+    </context-param>
+    <context-param>
+        <description>true to enable auto inserting of ripple data into database</description>
+        <param-name>database.autoinsert</param-name>
+        <param-value>false</param-value>
+    </context-param>
+    <context-param>
+        <description>Name of logger</description>
+        <param-name>logger.name</param-name>
+        <param-value>ripplebrokerlogger</param-value>
+    </context-param>
     <listener>
         <listener-class>mil.afrl.discoverylab.sate13.ripplebroker.BrokerContextListener</listener-class>
     </listener>

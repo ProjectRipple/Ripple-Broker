@@ -10,6 +10,7 @@ import java.nio.channels.DatagramChannel;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Observable;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import org.apache.log4j.Logger;
 
 /**
@@ -24,7 +25,7 @@ public class UDPListener extends Observable implements Runnable {
     private byte[] receiveBuffer;
     private DatagramPacket receivePacket;
     private static final int RECEIVE_BUF_SIZE = 400;
-    private Logger log = Logger.getLogger(Reference.LOGGER_NAME);
+    private Logger log = Logger.getLogger(Config.LOGGER_NAME);
 
     public UDPListener(InetAddress address, int port) {
         this.address = address;

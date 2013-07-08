@@ -8,9 +8,7 @@ import java.text.SimpleDateFormat;
  */
 public class Reference {
 
-    public static final String LOGGER_NAME = "ripplebrokerlogger";
     //Sensor constants
-
     public enum SENSOR_TYPES {
 
         SENSOR_PULSE_OX(0), SENSOR_ECG(1), SENSOR_TEMPERATURE(2);

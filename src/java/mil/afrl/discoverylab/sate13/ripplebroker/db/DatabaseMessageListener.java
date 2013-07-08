@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
 import mil.afrl.discoverylab.sate13.ripplebroker.UDPListenerObservation;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.PATIENT_TABLE_COLUMNS;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITALS_TABLE_COLUMNS;
@@ -27,7 +28,7 @@ import org.apache.log4j.Logger;
 public class DatabaseMessageListener implements Observer {
 
     private final DatabaseHelper databaseHelper;
-    private final Logger log = Logger.getLogger(Reference.LOGGER_NAME);
+    private final Logger log = Logger.getLogger(Config.LOGGER_NAME);
 
     public DatabaseMessageListener() {
 
