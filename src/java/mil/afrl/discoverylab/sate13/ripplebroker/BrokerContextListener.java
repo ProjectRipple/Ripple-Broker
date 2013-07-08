@@ -21,6 +21,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
+import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseMessageListener;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -34,7 +36,7 @@ public class BrokerContextListener implements ServletContextListener {
     private ExecutorService executor;
     private UDPListener task;
     private Logger log;
-    private static final int LISTEN_PORT = 3001;
+    private static final int LISTEN_PORT = 1234;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
@@ -47,7 +49,11 @@ public class BrokerContextListener implements ServletContextListener {
         try {
             // listen on anylocal address (:: or 0:0:0:0:0:0:0:0)
             task = new UDPListener(Inet6Address.getByAddress(new byte[16]), LISTEN_PORT);
-            task.addObserver(new testObserver());
+            //task.addObserver(new testObserver());
+            if(Config.AUTO_DATABASE_INSERT)
+            {
+                task.addObserver(new DatabaseMessageListener());
+            }
         } catch (UnknownHostException ex) {
             log.error("UnknownHostException", ex);
         }
