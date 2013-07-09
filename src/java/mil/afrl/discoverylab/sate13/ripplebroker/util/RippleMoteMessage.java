@@ -9,7 +9,7 @@ import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.SENSOR_TYPES;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * Container for Ripple data from motes
  * @author james
  */
 public class RippleMoteMessage {

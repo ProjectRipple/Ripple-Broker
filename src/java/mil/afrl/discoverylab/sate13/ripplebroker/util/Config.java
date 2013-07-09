@@ -1,7 +1,7 @@
 package mil.afrl.discoverylab.sate13.ripplebroker.util;
 
 /**
- *
+ * Class to hold current value of configuration options
  * @author james
  */
 public class Config {
