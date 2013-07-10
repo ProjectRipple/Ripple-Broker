@@ -1,0 +1,90 @@
+/* James West
+   CS 6800
+   Assignment 3 - WIS Twitter
+*/
+body
+{
+    background-color: #0F0F0F;
+    font-family:"Times New Roman", Times, serif;
+    color: white;
+    min-width: 800px;
+    text-align:center;
+}
+
+#maintitle
+{
+    color:#00A0FF;
+    font-family: Futura, "Trebuchet MS", Arial, sans-serif;
+    font-size: 50px; 
+    margin-bottom:0;
+}
+
+h2
+{
+    color:#0090FF;
+    font-size: 30px;
+    margin-bottom:0;
+}
+
+p
+{
+    font-size: 16px;
+    width: 69%;
+    margin:0 auto;
+}
+
+a:link, a:visited
+{
+    color: #7070FF;
+    text-decoration:none;
+    font-weight: lighter;
+}
+
+a:hover, a:active 
+{
+    color: #CF0000;
+    text-decoration:underline;
+}
+
+.centerlist
+{
+    width:68%;
+    margin:0 auto;
+    text-align:left;
+}
+
+hr
+{
+    width: 70%;
+}
+
+h3.projectname
+{
+    margin:0;
+    display: inline
+}
+
+.left
+{
+    float: left;
+    width: 50%;
+}
+
+.right
+{
+    margin-left: 50%;
+    width: 50%;
+
+}
+
+label
+{
+    font-size:large;
+}
+
+#tweetsuccessmessage
+{
+    color:#0090FF;
+    font-size: 20px;
+    display: none;
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE HTML>
+<!--
+  James West
+  CS 6800
+  Assignment 3 - WIS Twitter 
+-->
+<html>
+    <head>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+        
+        <script src="js/tweet.js" type="text/javascript"></script>
+        <link rel="stylesheet" type="text/css" href="./css/main.css" />
+    </head>
+    
+    
+    <body>
+        <h1 id="maintitle">WIS Twitter</h1>
+        <div style="width: 100%; overflow: hidden;">
+            <div id="tweetpostform" class="left">  
+            
+                <h2>Post a new Tweet:</h2>
+                <br/>
+                <label>wid:</label> <input type="text" id="wid" value=""></input>
+                <br/>
+                <br/>
+                <textarea id="tweettext" rows="10" cols="40" value=""></textarea>
+                <br/>
+                <small>
+                    (Maximum characters: 140)
+                    <br/>
+                    You have <input readonly type="text" id="tweetlengthcountdown" size="3" value="140"> characters left.
+                </small>
+                <br/>
+                
+                <button id="posttweet">Post Tweet</button>
+                <br/>
+                <big id="tweetsuccessmessage">Tweet successfully posted!</big>
+                
+            </div>
+            <div id="recenttweetform" class="right"> 
+                
+                <h2>Recent Tweets:</h2>
+                <textarea readonly id="recenttweets" rows="20" cols="40"></textarea>
+                <br/>
+                <button id="refreshtweets">Refresh Recent Tweets</button>
+            </div>
+        </div>
+    </body>
+
+
+</html>
