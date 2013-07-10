@@ -14,12 +14,14 @@ import org.apache.log4j.Logger;
  */
 public class RippleMoteMessage {
 
+    // Message information
     private InetSocketAddress senderAddress;
     private long timestamp;
     private int overflowCount;
     private Date systemTime;
     private Reference.SENSOR_TYPES sensorType;
     private List<RippleData> data;
+    // Logger
     private static Logger log = Logger.getLogger(Config.LOGGER_NAME);
     // Index constants
     private static final int INDEX_TIMESTAMP_START = 1;
@@ -44,12 +46,17 @@ public class RippleMoteMessage {
     private static final int SIZE_ECG_DATA = 2;
     private static final int SIZE_TEMPERATURE = 1;
 
+    /**
+     * Parse listener observation to a RippleMoteMessage
+     * @param obs
+     * @return 
+     */
     public static RippleMoteMessage parse(UDPListenerObservation obs) {
 
         RippleMoteMessage result = new RippleMoteMessage();
         byte[] message = obs.getMessage();
         List<RippleData> tData = new ArrayList<RippleData>();
-
+        // NOTE: must bit-wise and message byte with 0xff or sign extension will occur and result in the wrong value
         int overflowCount = (message[INDEX_OVERFLOW_COUNT] & 0xff);
         long timestamp = 0;
         int pulse = 0;
@@ -58,7 +65,7 @@ public class RippleMoteMessage {
 
         result.senderAddress = obs.getSender();
         result.overflowCount = overflowCount;
-
+        // get timestamp (4 bytes unsigned)
         for (int i = INDEX_TIMESTAMP_START; i < INDEX_TIMESTAMP_END; i++) {
             timestamp |= (message[i] & 0xff);
             timestamp = (timestamp << 8);
@@ -70,7 +77,8 @@ public class RippleMoteMessage {
 
         log.debug("Overflow count: " + overflowCount);
         log.debug("Timestamp: " + timestamp);
-
+        
+        // Get sensor type (1 byte unsigned)
         int type = (message[INDEX_SENSOR_TYPE] & 0xff);
 
         if (type == Reference.SENSOR_TYPES.SENSOR_PULSE_OX.getValue()) {
@@ -128,7 +136,7 @@ public class RippleMoteMessage {
 
             log.debug("Reported ECG:");
             log.debug("Offset is " + sampleOffsets + " ms");
-
+            // iterate through multiple readings
             for (int i = 0, buf_count = INDEX_ECG_START; i < numEcgSamples; i++, buf_count += SIZE_ECG_DATA) {
                 data[i] |= (message[buf_count] & 0xff);
                 data[i] = (data[i] << 8) | (message[buf_count + 1] & 0xff);
@@ -140,7 +148,7 @@ public class RippleMoteMessage {
 
 
         } else {
-            log.error("Unknown message! Type: " + message[5]);
+            log.error("Unknown message! Type: " + type);
         }
         result.data = tData;
         return result;
