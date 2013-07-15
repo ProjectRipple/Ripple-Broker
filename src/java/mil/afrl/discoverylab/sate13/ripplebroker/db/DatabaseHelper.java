@@ -42,11 +42,18 @@ public class DatabaseHelper {
     // lock object
     private final Object lock = new Object();
 
-    public static DatabaseHelper getInstance(ServletContext servletContext) {
+    /**
+     * Get current instance of database helper
+     * @param servletContext ServletContext for application, must be initalized only on first call and may be null for all subsequent calls.
+     * @return DatabaseHelper instance
+     */
+    public static DatabaseHelper getInstance(ServletContext servletContext){
         if (instance == null) {
             if (servletContext != null) {
+                // Create helper instance
                 instance = new DatabaseHelper(servletContext);
             } else {
+                // error
                 throw new IllegalArgumentException("Context cannot be null on first call of getInstance().");
             }
         }
@@ -77,6 +84,9 @@ public class DatabaseHelper {
 
     }
 
+    /**
+     * Create tables for Ripple in database
+     */
     private void createTables() {
         try {
             synchronized (lock) {
@@ -101,6 +111,7 @@ public class DatabaseHelper {
      * @throws SQLException
      */
     public CachedRowSet executeQuery(String query) throws SQLException {
+        // CachedRowSet allows returning of results after original ResultSet is closed
         CachedRowSet result = null;
         try {
             synchronized (lock) {
@@ -108,6 +119,7 @@ public class DatabaseHelper {
                 this.statement = this.connection.createStatement();
                 // Use rowset provider to remove JRE implementation dependence in code
                 result = RowSetProvider.newFactory().createCachedRowSet();
+                // populate row set with results
                 result.populate(this.statement.executeQuery(query));
             }
         } finally {
@@ -134,18 +146,27 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Insert row of data into database
+     * @param table
+     * @param values 
+     */
     public void insertRow(Reference.TABLE_NAMES table, List<Entry<Reference.TableColumns, String>> values) {
+        // start query string
         String query = "INSERT INTO " + table.toString().toLowerCase();
         String columnsString = " ";
         String valuesString = " ";
 
+        // create column and value strings
         for (Entry<Reference.TableColumns, String> entry : values) {
             columnsString += entry.getKey().toString().toLowerCase() + ",";
             valuesString += "'" + entry.getValue() + "'" + ",";
         }
+        // combine into final query string
         query += " (" + columnsString.substring(0, columnsString.length() - 1) + ") ";
         query += " VALUES(" + valuesString.substring(0, valuesString.length() - 1) + ");";
-//        log.debug(query);
+
+        // execute query
         try {
             this.execute(query);
         } catch (MySQLIntegrityConstraintViolationException dupex) {
@@ -155,6 +176,11 @@ public class DatabaseHelper {
         }
     }
 
+    /**
+     * Check if patient exists based on IP address
+     * @param address Patient's IP
+     * @return true if patient exists in database, false otherwise
+     */
     public boolean patientExists(InetAddress address) {
         boolean result = false;
         String query = "SELECT COUNT(*) as count FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
@@ -218,6 +244,7 @@ public class DatabaseHelper {
      */
     private void closeDatabase() {
         synchronized (lock) {
+            // close resultset, statement, and connection(generally in that order)
             try {
                 if (resultSet != null) {
                     resultSet.close();

@@ -27,7 +27,9 @@ import org.apache.log4j.Logger;
  */
 public class DatabaseMessageListener implements Observer {
 
+    // DB helper for this class
     private final DatabaseHelper databaseHelper;
+    // Logger
     private final Logger log = Logger.getLogger(Config.LOGGER_NAME);
 
     public DatabaseMessageListener() {
@@ -39,8 +41,10 @@ public class DatabaseMessageListener implements Observer {
     @Override
     public void update(Observable o, Object arg) {
         RippleMoteMessage msg = null;
+        // check this is a UDP listener observation
         if (arg instanceof UDPListenerObservation) {
             UDPListenerObservation obs = (UDPListenerObservation) arg;
+            // attempt parse of observation data
             msg = RippleMoteMessage.parse(obs);
         }
 
@@ -57,12 +61,12 @@ public class DatabaseMessageListener implements Observer {
             // get their id
             // TODO: just use getPatientId as an exists method? (<0 = not exists?)
             int patientId = this.databaseHelper.getPatientId(msg.getSenderAddress().getAddress());
-
+            // initalize columns in list
             dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.PID, "" + patientId));
             dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.SERVER_TIMESTAMP, Reference.datetimeFormat.format(msg.getSystemTime())));
             dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + msg.getTimestamp()));
             dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.SENSOR_TYPE, "" + msg.getSensorType().getValue()));
-
+            // save reference to these columns as they will change during below loop
             Entry<Reference.TableColumns, String> valueEntry = new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.VALUE, "");
             Entry<Reference.TableColumns, String> valueTypeEntry = new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.VALUE_TYPE, "");
 
@@ -71,6 +75,7 @@ public class DatabaseMessageListener implements Observer {
 
             List<RippleData> data = msg.getData();
 
+            // Determine data type
             switch (msg.getSensorType()) {
                 case SENSOR_PULSE_OX:
                     for (RippleData value : data) {
@@ -89,7 +94,7 @@ public class DatabaseMessageListener implements Observer {
                 case SENSOR_ECG:
                     valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_ECG.getValue());
                     for (RippleData value : data) {
-                        // TODO: convert ADC value?
+                        // TODO: convert ADC value to mV? Where?
                         valueEntry.setValue("" + ((ECGData) value).adcReading);
                         this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITALS, dataCols);
                     }

@@ -3,7 +3,7 @@ package mil.afrl.discoverylab.sate13.ripplebroker.util;
 import java.text.SimpleDateFormat;
 
 /**
- *
+ * Reference class for static values and enumerations
  * @author james
  */
 public class Reference {

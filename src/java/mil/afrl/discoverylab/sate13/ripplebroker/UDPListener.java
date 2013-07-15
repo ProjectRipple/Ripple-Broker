@@ -1,6 +1,5 @@
 package mil.afrl.discoverylab.sate13.ripplebroker;
 
-import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -14,17 +13,25 @@ import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import org.apache.log4j.Logger;
 
 /**
+ * Server to listen on a particular IP and port over UDP
  *
  * @author james
  */
 public class UDPListener extends Observable implements Runnable {
 
+    // Port server is listening on
     private int listenPort;
+    // Address servier is listening on
     private InetAddress address;
+    // Socket object that server is bound to
     private DatagramSocket socket = null;
+    // Buffer for incoming messages
     private byte[] receiveBuffer;
+    // Packet for incoming messages
     private DatagramPacket receivePacket;
+    // size in bytes of receive buffer
     private static final int RECEIVE_BUF_SIZE = 400;
+    // logger object
     private Logger log = Logger.getLogger(Config.LOGGER_NAME);
 
     public UDPListener(InetAddress address, int port) {
@@ -34,11 +41,14 @@ public class UDPListener extends Observable implements Runnable {
 
     }
 
+    /**
+     * Initialize and bind to socket
+     */
     private void setupSocket() {
         try {
             // initialize socket(must do it this way for bind() to succeed)
             this.socket = DatagramChannel.open().socket();
-
+            // No using socket to broadcast
             this.socket.setBroadcast(false);
             // Bind to local port
             this.socket.bind(new InetSocketAddress(this.address, this.listenPort));
@@ -58,8 +68,14 @@ public class UDPListener extends Observable implements Runnable {
     @Override
     public void run() {
         try {
+            // check if socket is null
+            if(this.socket == null)
+            {
+                // run initialization if it is
+                this.setupSocket();
+            }
             while (true) {
-                // Attempt receive
+                // Attempt receive (blocking call)
                 this.socket.receive(this.receivePacket);
                 // get sender info from socket address
                 InetSocketAddress sockAddr = ((InetSocketAddress) this.receivePacket.getSocketAddress());
@@ -76,22 +92,30 @@ public class UDPListener extends Observable implements Runnable {
 
                 // Reset packet length to buffer max
                 this.receivePacket.setLength(this.receiveBuffer.length);
-                // Reset packet buffer
+                // Clear packet buffer
                 Arrays.fill(this.receiveBuffer, (byte) 0);
             }
         } catch (IOException e) {
             log.debug(e);
         } finally {
             log.debug("Stopping run");
-            this.socket.close();
-            return;
+            // Make sure socket gets closed
+            this.stop();
         }
 
     }
 
+    /**
+     * Stop server run.
+     */
     public void stop() {
         log.debug("Stopping UDPListener.");
-        // close socket
-        this.socket.close();
+        if(this.socket != null)
+        {
+            // close socket(will cause IOException and stop run)
+            this.socket.close();
+        }
+        // reset socket object
+        this.socket = null;
     }
 }

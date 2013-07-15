@@ -4,7 +4,7 @@ import java.net.InetSocketAddress;
 import java.util.Date;
 
 /**
- *
+ * Object representing a message received by the UDP Listener
  * @author james
  */
 public class UDPListenerObservation {
@@ -33,6 +33,10 @@ public class UDPListenerObservation {
         return this.message;
     }
     
+    /**
+     * 
+     * @return the receive time
+     */
     public Date getReceiveTime()
     {
         return this.receiveTime;
