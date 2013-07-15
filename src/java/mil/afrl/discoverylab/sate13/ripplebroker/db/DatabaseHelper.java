@@ -1,17 +1,19 @@
 package mil.afrl.discoverylab.sate13.ripplebroker.db;
 
-
+import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import javax.servlet.ServletContext;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetProvider;
+import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Patient;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import org.apache.log4j.Logger;
@@ -40,7 +42,7 @@ public class DatabaseHelper {
     // lock object
     private final Object lock = new Object();
 
-    public static DatabaseHelper getInstance(ServletContext servletContext){
+    public static DatabaseHelper getInstance(ServletContext servletContext) {
         if (instance == null) {
             if (servletContext != null) {
                 instance = new DatabaseHelper(servletContext);
@@ -51,7 +53,7 @@ public class DatabaseHelper {
         return instance;
     }
 
-    private DatabaseHelper(ServletContext context){
+    private DatabaseHelper(ServletContext context) {
         // get database parameters
         // TODO: trust that they exist for now
         this.databaseHost = context.getInitParameter("database.host");
@@ -146,6 +148,8 @@ public class DatabaseHelper {
 //        log.debug(query);
         try {
             this.execute(query);
+        } catch (MySQLIntegrityConstraintViolationException dupex) {
+            //log.debug("Omitting duplicate entry.");
         } catch (SQLException ex) {
             log.error("Error with inserting row.\nQuery String" + query, ex);
         }
@@ -161,13 +165,39 @@ public class DatabaseHelper {
             result = (rowset.getInt("count") == 0) ? false : true;
             rowset.close();
         } catch (SQLException ex) {
-            log.error("Failed checking for patient in table.",ex);
+            log.error("Failed checking for patient in table.", ex);
         }
         return result;
     }
-    
-    public int getPatientId(InetAddress address)
-    {
+
+    public List<Patient> getAllpatients() {
+        String query = "SELECT * from patient";
+        log.debug("Querying all available Patients.");
+        ArrayList<Patient> pList = new ArrayList<Patient>();
+        try {
+            CachedRowSet rs = this.executeQuery(query);
+            rs.first();
+            while (!rs.isAfterLast()) {
+                pList.add(new Patient(
+                        rs.getInt(Reference.PATIENT_TABLE_COLUMNS.ID.name()),
+                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.IP_ADDR.name()),
+                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.FIRST_NAME.name()),
+                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.LAST_NAME.name()),
+                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.SSN.name()),
+                        rs.getDate(Reference.PATIENT_TABLE_COLUMNS.DOB.name()),
+                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.SEX.name()),
+                        rs.getInt(Reference.PATIENT_TABLE_COLUMNS.NBC_CONTAMINATION.name()),
+                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.TYPE.name())));
+                rs.next();
+            }
+            rs.close();
+        } catch (SQLException ex) {
+            log.error("Failed reading patient table. ", ex);
+        }
+        return pList;
+    }
+
+    public int getPatientId(InetAddress address) {
         int result = -1;
         String query = "SELECT id FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
         log.debug("Patient Id query: " + query);

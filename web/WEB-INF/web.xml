@@ -18,7 +18,7 @@
     </context-param>
     <context-param>
         <param-name>database.password</param-name>
-        <param-value>password</param-value>
+        <param-value>Mattmatt1</param-value>
     </context-param>
     <context-param>
         <description>Port for program to listen on for ripple messages</description>
@@ -42,9 +42,17 @@
         <servlet-name>Query</servlet-name>
         <servlet-class>mil.afrl.discoverylab.sate13.ripplebroker.servlets.QueryServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>PatientQueryServlet</servlet-name>
+        <servlet-class>mil.afrl.discoverylab.sate13.ripplebroker.servlets.PatientQueryServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>Query</servlet-name>
         <url-pattern>/Query</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>PatientQueryServlet</servlet-name>
+        <url-pattern>/PatientQueryServlet</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

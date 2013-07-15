@@ -6,10 +6,13 @@ package mil.afrl.discoverylab.sate13.ripplebroker.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Patient;
+import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import org.apache.log4j.Logger;
 
 /**
@@ -62,7 +65,7 @@ public class QueryServlet extends HttpServlet {
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+        throws ServletException, IOException {        
         processRequest(request, response);
     }
 
