@@ -9,13 +9,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
-import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITALS_TABLE_COLUMNS;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITAL_TABLE_COLUMNS;
 
 /**
  *
  * @author burt
  */
-public final class Vitals extends Model {
+public final class Vital extends Model {
     
     public Integer vid;
     public Integer pid;
@@ -25,7 +25,7 @@ public final class Vitals extends Model {
     public String value_type;
     public Integer value;
 
-    public Vitals(Integer vid, Integer pid, 
+    public Vital(Integer vid, Integer pid, 
                   Date server_timestamp, long sensor_timestamp, 
                   String sensor_type, String value_type, Integer value) {
         this.vid = vid;
@@ -37,7 +37,7 @@ public final class Vitals extends Model {
         this.value = value;
     }
 
-    public Vitals(Integer pid, 
+    public Vital(Integer pid, 
                   Date server_timestamp, long sensor_timestamp, 
                   String sensor_type, String value_type, Integer value) {
         this.pid = pid;
@@ -53,14 +53,14 @@ public final class Vitals extends Model {
         List<Map.Entry<Reference.TableColumns, String>> entries = new ArrayList<Map.Entry<Reference.TableColumns, String>>();
 
         if (vid != null) {
-            addEntry(entries, VITALS_TABLE_COLUMNS.VID, Integer.toString(vid));
+            addEntry(entries, VITAL_TABLE_COLUMNS.VID, Integer.toString(vid));
         }
-        addEntry(entries, VITALS_TABLE_COLUMNS.PID, Integer.toString(pid));
-        addEntry(entries, VITALS_TABLE_COLUMNS.SERVER_TIMESTAMP, Reference.datetimeFormat.format(server_timestamp));
-        addEntry(entries, VITALS_TABLE_COLUMNS.SENSOR_TIMESTAMP, Long.toString(sensor_timestamp));
-        addEntry(entries, VITALS_TABLE_COLUMNS.SENSOR_TYPE, sensor_type);
-        addEntry(entries, VITALS_TABLE_COLUMNS.VALUE_TYPE, value_type);
-        addEntry(entries, VITALS_TABLE_COLUMNS.VALUE, Integer.toString(value));
+        addEntry(entries, VITAL_TABLE_COLUMNS.PID, Integer.toString(pid));
+        addEntry(entries, VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, Reference.datetimeFormat.format(server_timestamp));
+        addEntry(entries, VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, Long.toString(sensor_timestamp));
+        addEntry(entries, VITAL_TABLE_COLUMNS.SENSOR_TYPE, sensor_type);
+        addEntry(entries, VITAL_TABLE_COLUMNS.VALUE_TYPE, value_type);
+        addEntry(entries, VITAL_TABLE_COLUMNS.VALUE, Integer.toString(value));
 
         return entries;
     }

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Ripple Info Broker Test Form Page</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>
+        <div align="center">
+            <h1>Ripple Info Broker Test Form Page</h1>
+            <form name="PatientQueryTest" action="/RippleBroker/Query" method="get"><br/>
+                QueryType: <input type="text" name="QueryType" value="PATIENT"/><br/>
+                <input type="submit" value="Submit"/>
+            </form><br/><br/>
+            <form name="VitalsQueryTest" action="/RippleBroker/Query" method="get">
+                QueryType: <input type="text" name="QueryType" value="VITAL"/><br/>
+                PatientID: <input type="number" name="pid" value="1"/><br/>
+                VitalIDInitial: <input type="number" name="vidi" value="0"/><br/>
+                Limit: <input type="number" name="limit" value="0"/><br/>
+                <input type="submit" value="Submit"/>
+            </form>
+        </div>
+    </body>
+</html>

@@ -1,18 +1,26 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package mil.afrl.discoverylab.sate13.ripplebroker.servlets;
 
+import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Patient;
+import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.PATIENT_TABLE_COLUMNS;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.TABLE_NAMES;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.TableColumns;
 import org.apache.log4j.Logger;
 
 /**
@@ -20,6 +28,14 @@ import org.apache.log4j.Logger;
  * @author james
  */
 public class QueryServlet extends HttpServlet {
+
+    private static DatabaseHelper dbh;
+    private static Logger log = Logger.getLogger(Config.LOGGER_NAME);
+
+    @Override
+    public void init() {
+        dbh = DatabaseHelper.getInstance(null);
+    }
 
     /**
      * Processes requests for both HTTP
@@ -31,29 +47,99 @@ public class QueryServlet extends HttpServlet {
      * @throws ServletException if a servlet-specific error occurs
      * @throws IOException if an I/O error occurs
      */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
-        Logger log = Logger.getLogger("ripplebrokerlogger");
-        log.debug("Processing Request");
-        // Example request dispatcher
-        request.getRequestDispatcher("tweet.html").forward(request, response);
+    protected void processRequest(HttpServletRequest request,
+                                  HttpServletResponse response)
+            throws ServletException, IOException {
         
-//        response.setContentType("text/html;charset=UTF-8");
-//        PrintWriter out = response.getWriter();
-//        try {
-//            /* TODO output your page here. You may use following sample code. */
-//            out.println("<!DOCTYPE html>");
-//            out.println("<html>");
-//            out.println("<head>");
-//            out.println("<title>Servlet QueryServlet</title>");            
-//            out.println("</head>");
-//            out.println("<body>");
-//            out.println("<h1>Servlet QueryServlet at " + request.getContextPath() + "</h1>");
-//            out.println("</body>");
-//            out.println("</html>");
-//        } finally {            
-//            out.close();
-//        }
+        log.debug("Processing request");
+        
+        response.setContentType("text/html;charset=UTF-8");
+
+        addResponder(request.getRemoteAddr());
+
+        String querytype = request.getParameter("QueryType");
+        String restr;
+
+        switch (Reference.QUERY_TYPES.valueOf(querytype.toUpperCase())) {
+            case PATIENT:
+                restr = this.processPatientQueryRequest(request);
+                break;
+            case VITAL:
+                restr = this.processVitalQueryRequest(request);
+                break;
+            default:
+                restr = "{\"Failure\": \"invalid query type\"}";
+        }
+
+        PrintWriter out = response.getWriter();
+        try {
+            out.println(restr);
+        } finally {
+            out.close();
+        }
+    }
+
+    protected void addResponder(String ip_addr) {
+        try {
+            if (!dbh.patientExists(InetAddress.getByName(ip_addr))) {
+
+                List<Map.Entry<TableColumns, String>> entries = new ArrayList<Map.Entry<TableColumns, String>>();
+                entries.add(new AbstractMap.SimpleEntry<TableColumns, String>(PATIENT_TABLE_COLUMNS.IP_ADDR, ip_addr));
+                dbh.insertRow(TABLE_NAMES.PATIENT, entries);
+            }
+        } catch (UnknownHostException ex) {
+            log.error("Unable to parse responder IP address: "
+                      + ip_addr + " error: " + ex);
+        }
+    }
+
+    protected String processPatientQueryRequest(HttpServletRequest request)
+            throws ServletException, IOException {
+        
+        String type = "patient";
+        String jstr = "{" + type + "s:{" + type + ":";
+
+        List<Patient> pList = dbh.getAllpatients();
+
+        if (pList != null && !pList.isEmpty()) {
+            jstr += new Gson().toJson(pList) + "}}";
+        } else {
+            jstr += "[]}}";
+        }
+
+        return jstr;
+    }
+
+    protected String processVitalQueryRequest(HttpServletRequest request)
+            throws ServletException, IOException {
+
+        String type = "vital";
+        String jstr = "{" + type + "s:{" + type + ":";
+
+        String pidstr = request.getParameter("pid");
+        String vidistr = request.getParameter("vidi");
+        String limitstr = request.getParameter("limit");
+
+        try {
+            Integer pid = Integer.parseInt(pidstr);
+            Integer vidi = Integer.parseInt(vidistr);
+            Integer limit = Integer.parseInt(limitstr);
+
+            List<Vital> vList = dbh.getAllVitalsForPatient(pid,
+                                                           vidi,
+                                                           limit);
+            if (vList != null && !vList.isEmpty()) {
+                jstr += new Gson().toJson(vList) + "}}";
+            } else {
+                jstr += "[]}}";
+            }
+        } catch (NumberFormatException nfe) {
+            jstr = "{\"Failure\": \"invalid pid: " + pidstr
+                   + ", vidi: " + vidistr + ", or limit: "
+                   + limitstr + " params\"}";
+        }
+
+        return jstr;
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -68,7 +154,7 @@ public class QueryServlet extends HttpServlet {
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {        
+            throws ServletException, IOException {
         processRequest(request, response);
     }
 
@@ -83,7 +169,7 @@ public class QueryServlet extends HttpServlet {
      */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-        throws ServletException, IOException {
+            throws ServletException, IOException {
         processRequest(request, response);
     }
 

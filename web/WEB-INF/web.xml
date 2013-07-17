@@ -43,16 +43,16 @@
         <servlet-class>mil.afrl.discoverylab.sate13.ripplebroker.servlets.QueryServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>PatientQueryServlet</servlet-name>
-        <servlet-class>mil.afrl.discoverylab.sate13.ripplebroker.servlets.PatientQueryServlet</servlet-class>
+        <servlet-name>Intervention</servlet-name>
+        <servlet-class>mil.afrl.discoverylab.sate13.ripplebroker.servlets.InterventionServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>Query</servlet-name>
         <url-pattern>/Query</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>PatientQueryServlet</servlet-name>
-        <url-pattern>/PatientQueryServlet</url-pattern>
+        <servlet-name>Intervention</servlet-name>
+        <url-pattern>/Intervention</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

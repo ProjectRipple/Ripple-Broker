@@ -21,7 +21,7 @@ import java.util.logging.Level;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vitals;
+import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseMessageListener;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
@@ -31,6 +31,7 @@ import org.apache.log4j.PropertyConfigurator;
 
 /**
  * Context listener for program, called when program is loaded or unloaded.
+ *
  * @author james
  */
 public class BrokerContextListener implements ServletContextListener {
@@ -69,39 +70,40 @@ public class BrokerContextListener implements ServletContextListener {
         log.debug("Context Initialized");
 
     }
-    
+
     /**
      * Loads config options
-     * @param ctx 
+     *
+     * @param ctx
      */
-    private void initConfig(ServletContext ctx)
-    {
+    private void initConfig(ServletContext ctx) {
         // Load logger name from config
         Config.LOGGER_NAME = ctx.getInitParameter("logger.name");
-        if(Config.LOGGER_NAME == null){
+        if (Config.LOGGER_NAME == null) {
             // Load default logger name
             Config.LOGGER_NAME = "ripplebrokerlogger";
             System.out.println("Error: Logger name init parameter is null.");
             System.out.println("Falling back to default value: " + Config.LOGGER_NAME);
         }
-        
+
         // Load listen port from config
-        try{
+        try {
             Config.LISTEN_PORT = Integer.parseInt(ctx.getInitParameter("motelisten.port"));
-        } catch(NumberFormatException ne){
+        } catch (NumberFormatException ne) {
             // Load default port
             System.out.println("Error: Listen port init parameter is not an integer. Parameter=" + ctx.getInitParameter("motelisten.port"));
             Config.LISTEN_PORT = 1234;
             System.out.println("Falling back to default port " + Config.LISTEN_PORT);
         }
-        
+
         // Load database insert option from config, only the word true (ignoring case) will result in a boolean true value
         Config.AUTO_DATABASE_INSERT = Boolean.parseBoolean(ctx.getInitParameter("database.autoinsert"));
     }
 
     /**
      * initalizes logger
-     * @param ctx 
+     *
+     * @param ctx
      */
     private void initLogger(ServletContext ctx) {
         // Initialize Log4j
@@ -135,7 +137,8 @@ public class BrokerContextListener implements ServletContextListener {
 
     /**
      * Initialize database
-     * @param servletContext 
+     *
+     * @param servletContext
      */
     private void initDatabase(ServletContext servletContext) {
         // Initalize database helper, context required only on first call to getInstance
@@ -150,33 +153,33 @@ public class BrokerContextListener implements ServletContextListener {
         insertTestPatient(ipb);
     }
 
-    private void insertVitals(ArrayList<Vitals> vitalsList) {
+    private void insertVitals(ArrayList<Vital> vitalsList) {
         DatabaseHelper db = DatabaseHelper.getInstance(null);
-        for (Vitals v : vitalsList) {
-            db.insertRow(Reference.TABLE_NAMES.VITALS, v.toListEntries());
+        for (Vital v : vitalsList) {
+            db.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
         }
     }
 
-    private ArrayList<Vitals> extractVitalsFromShimmerDataFile(int pid, final String prefix, final String filename) {
+    private ArrayList<Vital> extractVitalsFromShimmerDataFile(int pid, final String prefix, final String filename) {
         String separator = System.getProperty("file.separator");
         String file = prefix + "WEB-INF" + separator + "classes" + separator + filename;
 
-        ArrayList<Vitals> vitalsList = null;
+        ArrayList<Vital> vList = null;
         BufferedReader br = null;
         try {
             br = new BufferedReader(new FileReader(file));
             String line;
-            vitalsList = new ArrayList<Vitals>();
+            vList = new ArrayList<Vital>();
             int vid = 0;
             while ((line = br.readLine()) != null) {
                 String[] splits = line.split(";");
-                vitalsList.add(new Vitals(vid++,
-                                          pid,
-                                          new Date(),
-                                          (int) (Double.parseDouble(splits[3]) * 1000.0),
-                                          Integer.toString(Reference.SENSOR_TYPES.SENSOR_ECG.getValue()),
-                                          Integer.toString(Reference.VITAL_TYPES.VITAL_ECG.getValue()),
-                                          (int) (Double.parseDouble(splits[4]) * 10000000.0)));
+                vList.add(new Vital(vid++,
+                                    pid,
+                                    new Date(),
+                                    (int) (Double.parseDouble(splits[3]) * 1000.0),
+                                    Integer.toString(Reference.SENSOR_TYPES.SENSOR_ECG.getValue()),
+                                    Integer.toString(Reference.VITAL_TYPES.VITAL_ECG.getValue()),
+                                    (int) (Double.parseDouble(splits[4]) * 10000000.0)));
             }
         } catch (IOException ex) {
             log.error("Failed to read Shimmer data from file: " + file, ex);
@@ -188,7 +191,7 @@ public class BrokerContextListener implements ServletContextListener {
             } catch (IOException ignore) {
             }
         }
-        return vitalsList;
+        return vList;
     }
 
     private int insertTestPatient(String ip) {

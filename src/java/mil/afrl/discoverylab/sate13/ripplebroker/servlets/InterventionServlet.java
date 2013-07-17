@@ -1,21 +1,28 @@
 package mil.afrl.discoverylab.sate13.ripplebroker.servlets;
 
-import com.google.gson.Gson;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Patient;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 
 /**
+ * Patient Query Servlet serves patient info.
+ *
+ * Currently a json-formatted list of all patients are output.
  *
  * @author Matt
  */
-public class PatientQueryServlet extends HttpServlet {
+public class InterventionServlet extends HttpServlet {
+
+    private static DatabaseHelper DBH;
+
+    @Override
+    public void init() {
+        DBH = DatabaseHelper.getInstance(null);
+    }
 
     /**
      * Processes requests for both HTTP
@@ -31,18 +38,17 @@ public class PatientQueryServlet extends HttpServlet {
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
-
-        String type = "patient";
-        String jstr;
-        List<Patient> pList = DatabaseHelper.getInstance(null).getAllpatients();
-        if (pList != null && !pList.isEmpty()) {
-            jstr = "{" + type + "s:{" + type + ":" + new Gson().toJson(pList) + "}}";
-        } else {
-            jstr = "failure";
-        }
-
         try {
-            out.println(jstr);
+            /* TODO output your page here. You may use following sample code. */
+            out.println("<!DOCTYPE html>");
+            out.println("<html>");
+            out.println("<head>");
+            out.println("<title>Servlet QueryServlet</title>");
+            out.println("</head>");
+            out.println("<body>");
+            out.println("<h1>Servlet QueryServlet at " + request.getContextPath() + "</h1>");
+            out.println("</body>");
+            out.println("</html>");
         } finally {
             out.close();
         }

@@ -8,6 +8,10 @@ import java.text.SimpleDateFormat;
  */
 public class Reference {
 
+    public enum QUERY_TYPES {
+        PATIENT, VITAL;
+    }
+    
     //Sensor constants
     public enum SENSOR_TYPES {
 
@@ -22,9 +26,9 @@ public class Reference {
             return id;
         }
     };
+    
     // Vital constants
     public enum VITAL_TYPES {
-
         VITAL_PULSE(0), VITAL_ECG(1), VITAL_TEMPERATURE(2), VITAL_BLOOD_OX(3);
         private final int id;
 
@@ -41,7 +45,7 @@ public class Reference {
 
     public enum TABLE_NAMES {
 
-        PATIENT, VITALS
+        PATIENT, VITAL
     };
 
     public interface TableColumns {
@@ -52,7 +56,7 @@ public class Reference {
         ID, IP_ADDR, FIRST_NAME, LAST_NAME, SSN, DOB, SEX, NBC_CONTAMINATION, TYPE
     };
 
-    public enum VITALS_TABLE_COLUMNS implements TableColumns {
+    public enum VITAL_TABLE_COLUMNS implements TableColumns {
 
         VID, PID, SERVER_TIMESTAMP, SENSOR_TIMESTAMP, SENSOR_TYPE, VALUE_TYPE, VALUE
     };
@@ -72,7 +76,7 @@ public class Reference {
         + "  PRIMARY KEY (id),"
         + "  UNIQUE KEY ip_addr (ip_addr)"
         + ");";
-    public static final String VITALS_TABLE_CREATE = "CREATE TABLE IF NOT EXISTS vitals ("
+    public static final String VITAL_TABLE_CREATE = "CREATE TABLE IF NOT EXISTS vital ("
         + "  vid int(11) NOT NULL AUTO_INCREMENT,"
         + "  pid int(11) NOT NULL,"
         + "  server_timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,"

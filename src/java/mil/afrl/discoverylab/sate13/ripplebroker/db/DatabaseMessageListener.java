@@ -10,7 +10,7 @@ import mil.afrl.discoverylab.sate13.ripplebroker.UDPListenerObservation;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.PATIENT_TABLE_COLUMNS;
-import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITALS_TABLE_COLUMNS;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITAL_TABLE_COLUMNS;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITAL_TYPES;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.RippleMoteMessage;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.RippleMoteMessage.ECGData;
@@ -62,13 +62,13 @@ public class DatabaseMessageListener implements Observer {
             // TODO: just use getPatientId as an exists method? (<0 = not exists?)
             int patientId = this.databaseHelper.getPatientId(msg.getSenderAddress().getAddress());
             // initalize columns in list
-            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.PID, "" + patientId));
-            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.SERVER_TIMESTAMP, Reference.datetimeFormat.format(msg.getSystemTime())));
-            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + msg.getTimestamp()));
-            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.SENSOR_TYPE, "" + msg.getSensorType().getValue()));
+            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.PID, "" + patientId));
+            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, Reference.datetimeFormat.format(msg.getSystemTime())));
+            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + msg.getTimestamp()));
+            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TYPE, "" + msg.getSensorType().getValue()));
             // save reference to these columns as they will change during below loop
-            Entry<Reference.TableColumns, String> valueEntry = new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.VALUE, "");
-            Entry<Reference.TableColumns, String> valueTypeEntry = new SimpleEntry<Reference.TableColumns, String>(VITALS_TABLE_COLUMNS.VALUE_TYPE, "");
+            Entry<Reference.TableColumns, String> valueEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.VALUE, "");
+            Entry<Reference.TableColumns, String> valueTypeEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.VALUE_TYPE, "");
 
             dataCols.add(valueEntry);
             dataCols.add(valueTypeEntry);
@@ -82,12 +82,12 @@ public class DatabaseMessageListener implements Observer {
                         valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_PULSE.getValue());
                         valueEntry.setValue("" + ((PulseOxData) value).pulse);
 
-                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITALS, dataCols);
+                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
 
                         valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_BLOOD_OX.getValue());
                         valueEntry.setValue("" + ((PulseOxData) value).bloodOxygen);
 
-                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITALS, dataCols);
+                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
 
                     }
                     break;
@@ -96,14 +96,14 @@ public class DatabaseMessageListener implements Observer {
                     for (RippleData value : data) {
                         // TODO: convert ADC value to mV? Where?
                         valueEntry.setValue("" + ((ECGData) value).adcReading);
-                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITALS, dataCols);
+                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
                     }
                     break;
                 case SENSOR_TEMPERATURE:
                     valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_TEMPERATURE.getValue());
                     for (RippleData value : data) {
                         valueEntry.setValue("" + ((TemperatureData) value).temperature);
-                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITALS, dataCols);
+                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
                     }
                     break;
                 default:

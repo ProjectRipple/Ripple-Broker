@@ -14,8 +14,11 @@ import javax.servlet.ServletContext;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetProvider;
 import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Patient;
+import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITAL_TABLE_COLUMNS;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.PATIENT_TABLE_COLUMNS;
 import org.apache.log4j.Logger;
 
 /**
@@ -44,10 +47,12 @@ public class DatabaseHelper {
 
     /**
      * Get current instance of database helper
-     * @param servletContext ServletContext for application, must be initalized only on first call and may be null for all subsequent calls.
+     *
+     * @param servletContext ServletContext for application, must be initalized
+     * only on first call and may be null for all subsequent calls.
      * @return DatabaseHelper instance
      */
-    public static DatabaseHelper getInstance(ServletContext servletContext){
+    public static DatabaseHelper getInstance(ServletContext servletContext) {
         if (instance == null) {
             if (servletContext != null) {
                 // Create helper instance
@@ -93,7 +98,7 @@ public class DatabaseHelper {
                 this.connection = DriverManager.getConnection(this.connectionURI);
                 this.statement = this.connection.createStatement();
                 this.statement.execute(Reference.PATIENT_TABLE_CREATE);
-                this.statement.execute(Reference.VITALS_TABLE_CREATE);
+                this.statement.execute(Reference.VITAL_TABLE_CREATE);
             }
         } catch (SQLException ex) {
             log.error("Problem creating database tables.", ex);
@@ -148,8 +153,9 @@ public class DatabaseHelper {
 
     /**
      * Insert row of data into database
+     *
      * @param table
-     * @param values 
+     * @param values
      */
     public void insertRow(Reference.TABLE_NAMES table, List<Entry<Reference.TableColumns, String>> values) {
         // start query string
@@ -178,6 +184,7 @@ public class DatabaseHelper {
 
     /**
      * Check if patient exists based on IP address
+     *
      * @param address Patient's IP
      * @return true if patient exists in database, false otherwise
      */
@@ -197,23 +204,26 @@ public class DatabaseHelper {
     }
 
     public List<Patient> getAllpatients() {
-        String query = "SELECT * from patient";
+        StringBuilder q = new StringBuilder("SELECT * FROM ");
+        q.append(Reference.TABLE_NAMES.PATIENT.toString().toLowerCase());
+
         log.debug("Querying all available Patients.");
+
         ArrayList<Patient> pList = new ArrayList<Patient>();
         try {
-            CachedRowSet rs = this.executeQuery(query);
+            CachedRowSet rs = this.executeQuery(q.toString());
             rs.first();
             while (!rs.isAfterLast()) {
                 pList.add(new Patient(
-                        rs.getInt(Reference.PATIENT_TABLE_COLUMNS.ID.name()),
-                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.IP_ADDR.name()),
-                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.FIRST_NAME.name()),
-                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.LAST_NAME.name()),
-                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.SSN.name()),
-                        rs.getDate(Reference.PATIENT_TABLE_COLUMNS.DOB.name()),
-                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.SEX.name()),
-                        rs.getInt(Reference.PATIENT_TABLE_COLUMNS.NBC_CONTAMINATION.name()),
-                        rs.getString(Reference.PATIENT_TABLE_COLUMNS.TYPE.name())));
+                        rs.getInt(PATIENT_TABLE_COLUMNS.ID.name()),
+                        rs.getString(PATIENT_TABLE_COLUMNS.IP_ADDR.name()),
+                        rs.getString(PATIENT_TABLE_COLUMNS.FIRST_NAME.name()),
+                        rs.getString(PATIENT_TABLE_COLUMNS.LAST_NAME.name()),
+                        rs.getString(PATIENT_TABLE_COLUMNS.SSN.name()),
+                        rs.getDate(PATIENT_TABLE_COLUMNS.DOB.name()),
+                        rs.getString(PATIENT_TABLE_COLUMNS.SEX.name()),
+                        rs.getInt(PATIENT_TABLE_COLUMNS.NBC_CONTAMINATION.name()),
+                        rs.getString(PATIENT_TABLE_COLUMNS.TYPE.name())));
                 rs.next();
             }
             rs.close();
@@ -223,8 +233,51 @@ public class DatabaseHelper {
         return pList;
     }
 
+    public List<Vital> getAllVitalsForPatient(Integer pid, Integer vidi, Integer limit) {
+
+        StringBuilder q = new StringBuilder("SELECT * FROM ");
+        q.append(Reference.TABLE_NAMES.VITAL.toString().toLowerCase());
+        q.append(" WHERE ");
+        q.append(Reference.VITAL_TABLE_COLUMNS.PID.name());
+        q.append(" = ");
+        q.append(pid);
+        q.append(" AND ");
+        q.append(Reference.VITAL_TABLE_COLUMNS.VID.name());
+        q.append(" >= ");
+        q.append(vidi);
+        q.append(" ORDER BY ");
+        q.append(Reference.VITAL_TABLE_COLUMNS.VID.name());
+        if (limit > 0) {
+            q.append(" LIMIT ");
+            q.append(limit);
+        }
+
+        log.debug("Querying vitals for Patient: " + pid + ", vidi: " + vidi
+                  + ", limit: " + limit);
+        ArrayList<Vital> vList = new ArrayList<Vital>();
+        try {
+            CachedRowSet rs = this.executeQuery(q.toString());
+            rs.first();
+            while (!rs.isAfterLast()) {
+                vList.add(new Vital(
+                        rs.getInt(VITAL_TABLE_COLUMNS.VID.name()),
+                        rs.getInt(VITAL_TABLE_COLUMNS.PID.name()),
+                        rs.getDate(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP.name()),
+                        rs.getLong(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP.name()),
+                        rs.getString(VITAL_TABLE_COLUMNS.SENSOR_TYPE.name()),
+                        rs.getString(VITAL_TABLE_COLUMNS.VALUE_TYPE.name()),
+                        rs.getInt(VITAL_TABLE_COLUMNS.VALUE.name())));
+                rs.next();
+            }
+            rs.close();
+        } catch (SQLException ex) {
+            log.error("Failed reading vitals table. ", ex);
+        }
+        return vList;
+    }
+
     public int getPatientId(InetAddress address) {
-        int result = -1;
+        int result;
         String query = "SELECT id FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
         log.debug("Patient Id query: " + query);
         try {
