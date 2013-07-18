@@ -1,4 +1,4 @@
-package mil.afrl.discoverylab.sate13.ripplebroker;
+package mil.afrl.discoverylab.sate13.ripplebroker.network;
 
 import java.net.InetSocketAddress;
 import java.util.Date;

@@ -1,4 +1,4 @@
-package mil.afrl.discoverylab.sate13.ripplebroker;
+package mil.afrl.discoverylab.sate13.ripplebroker.network;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
-import mil.afrl.discoverylab.sate13.ripplebroker.UDPListenerObservation;
+import mil.afrl.discoverylab.sate13.ripplebroker.network.UDPListenerObservation;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.PATIENT_TABLE_COLUMNS;
