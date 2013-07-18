@@ -90,11 +90,15 @@ public class RippleMoteMessage {
             result.sensorType = SENSOR_TYPES.SENSOR_PULSE_OX;
             // got pulse and blood oxygen message
             int numPulseOxSamples = (message[INDEX_SAMPLE_COUNT] & 0x00ff);
-
+            int spo2SamplePeriod = 0; 
+            spo2SamplePeriod |= (message[INDEX_PULSE_OX_PERIOD] & 0x00ff);
+            spo2SamplePeriod = (spo2SamplePeriod << 8) | (message[INDEX_PULSE_OX_PERIOD + 1] & 0x00ff);
+            long tSampleTime;
+            
             // heart rate
             log.debug("Reported pulse and blood oxygen:");
             log.debug("Num samples: " + numPulseOxSamples);
-
+            log.debug("Period is " + spo2SamplePeriod + " ms");
 
             // iterate through multiple samples(if provided)
             for (int i = 0, j = INDEX_PULSE_START; i < numPulseOxSamples; i++, j += SIZE_PULSE + SIZE_BLOOD_OX) {
@@ -103,9 +107,11 @@ public class RippleMoteMessage {
 
                 // blood oxygen
                 bloodOx = (message[j + 2] & 0xff);
+                
+                tSampleTime = (result.timestamp - (spo2SamplePeriod*(numPulseOxSamples - i+1)));
 
                 // add point to list
-                tData.add(new PulseOxData(pulse, bloodOx));
+                tData.add(new PulseOxData(tSampleTime,pulse, bloodOx));
                 log.debug("Pulse (BPM): " + pulse);
                 log.debug("Blood oxygen: " + bloodOx);
             }
@@ -116,15 +122,22 @@ public class RippleMoteMessage {
             result.sensorType = SENSOR_TYPES.SENSOR_TEMPERATURE;
             // got temperature reading message
             int numTemperatureSamples = (message[INDEX_SAMPLE_COUNT] & 0x00ff);
+            int temperaturePeriod = 0;
+            temperaturePeriod |= (message[INDEX_TEMPERATURE_PERIOD] & 0x00ff);
+            temperaturePeriod = (temperaturePeriod << 8) | (message[INDEX_TEMPERATURE_PERIOD + 1] & 0x00ff);
+            long tSampleTime;
 
             log.debug("Reported temperature:");
             log.debug("Num samples: " + numTemperatureSamples);
+            log.debug("Period is " + temperaturePeriod + " ms");
             // iterate through multiple samples(if provided)
             for (int i = 0, j = INDEX_TEMPERATURE; i < numTemperatureSamples; i++, j += SIZE_TEMPERATURE) {
                 temperature = (message[j] & 0x00ff);
 
+                tSampleTime = (result.timestamp - (temperaturePeriod*(numTemperatureSamples - i+1)));
+                
                 // Add point to list
-                tData.add(new TemperatureData(temperature));
+                tData.add(new TemperatureData(tSampleTime,temperature));
                 log.debug("Temperature: " + temperature);
             }
 
@@ -212,9 +225,10 @@ public class RippleMoteMessage {
         public int bloodOxygen;
         public long sampleTime;
 
-        public PulseOxData(int pulse, int bloodOx) {
+        public PulseOxData(long sampleTime, int pulse, int bloodOx) {
             this.pulse = pulse;
             this.bloodOxygen = bloodOx;
+            this.sampleTime = sampleTime;
         }
     }
 
@@ -223,8 +237,9 @@ public class RippleMoteMessage {
         public int temperature;
         public long sampleTime;
 
-        public TemperatureData(int temperature) {
+        public TemperatureData(long sampleTime, int temperature) {
             this.temperature = temperature;
+            this.sampleTime = sampleTime;
         }
     }
 
@@ -233,11 +248,6 @@ public class RippleMoteMessage {
         public int adcReading;
         public int sampleOffsets;
         public long sampleTime;
-
-        public ECGData(int sampleOffsets, int adcReading) {
-            this.adcReading = adcReading;
-            this.sampleOffsets = sampleOffsets;
-        }
         
         public ECGData(long sampleTime, int sampleOffsets, int adcReading) {
             this.adcReading = adcReading;
