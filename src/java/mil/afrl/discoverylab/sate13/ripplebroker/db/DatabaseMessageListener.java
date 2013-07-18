@@ -64,12 +64,13 @@ public class DatabaseMessageListener implements Observer {
             // initalize columns in list
             dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.PID, "" + patientId));
             dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, Reference.datetimeFormat.format(msg.getSystemTime())));
-            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + msg.getTimestamp()));
             dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TYPE, "" + msg.getSensorType().getValue()));
             // save reference to these columns as they will change during below loop
+            Entry<Reference.TableColumns, String> sensorTimestampEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + msg.getTimestamp());
             Entry<Reference.TableColumns, String> valueEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.VALUE, "");
             Entry<Reference.TableColumns, String> valueTypeEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.VALUE_TYPE, "");
-
+            
+            dataCols.add(sensorTimestampEntry);
             dataCols.add(valueEntry);
             dataCols.add(valueTypeEntry);
 
@@ -96,6 +97,7 @@ public class DatabaseMessageListener implements Observer {
                     for (RippleData value : data) {
                         // TODO: convert ADC value to mV? Where?
                         valueEntry.setValue("" + ((ECGData) value).adcReading);
+                        sensorTimestampEntry.setValue("" + ((ECGData) value).sampleTime);
                         this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
                     }
                     break;
