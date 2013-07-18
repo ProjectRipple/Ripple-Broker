@@ -133,6 +133,7 @@ public class RippleMoteMessage {
 
             int sampleOffsets = (message[INDEX_ECG_OFFSET] & 0xff);
             int[] data = new int[numEcgSamples];
+            long tSampleTime;
 
             log.debug("Reported ECG:");
             log.debug("Offset is " + sampleOffsets + " ms");
@@ -140,9 +141,10 @@ public class RippleMoteMessage {
             for (int i = 0, buf_count = INDEX_ECG_START; i < numEcgSamples; i++, buf_count += SIZE_ECG_DATA) {
                 data[i] |= (message[buf_count] & 0xff);
                 data[i] = (data[i] << 8) | (message[buf_count + 1] & 0xff);
-
-                tData.add(new ECGData(sampleOffsets, data[i]));
-                log.debug("Data: " + data[i]);
+                
+                tSampleTime = (result.timestamp - (sampleOffsets*(numEcgSamples - i+1)));
+                tData.add(new ECGData(tSampleTime, sampleOffsets, data[i]));
+                log.debug("Time: " + ((ECGData)tData.get(tData.size()-1)).sampleTime + "Data: " + data[i]);
             }
 
 
@@ -204,6 +206,7 @@ public class RippleMoteMessage {
 
         public int pulse;
         public int bloodOxygen;
+        public long sampleTime;
 
         public PulseOxData(int pulse, int bloodOx) {
             this.pulse = pulse;
@@ -214,6 +217,7 @@ public class RippleMoteMessage {
     public static class TemperatureData implements RippleData {
 
         public int temperature;
+        public long sampleTime;
 
         public TemperatureData(int temperature) {
             this.temperature = temperature;
@@ -224,10 +228,17 @@ public class RippleMoteMessage {
 
         public int adcReading;
         public int sampleOffsets;
+        public long sampleTime;
 
         public ECGData(int sampleOffsets, int adcReading) {
             this.adcReading = adcReading;
             this.sampleOffsets = sampleOffsets;
+        }
+        
+        public ECGData(long sampleTime, int sampleOffsets, int adcReading) {
+            this.adcReading = adcReading;
+            this.sampleOffsets = sampleOffsets;
+            this.sampleTime = sampleTime;
         }
     }
 }

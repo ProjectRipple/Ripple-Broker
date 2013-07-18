@@ -18,7 +18,7 @@
     </context-param>
     <context-param>
         <param-name>database.password</param-name>
-        <param-value>Mattmatt1</param-value>
+        <param-value>password</param-value>
     </context-param>
     <context-param>
         <description>Port for program to listen on for ripple messages</description>
