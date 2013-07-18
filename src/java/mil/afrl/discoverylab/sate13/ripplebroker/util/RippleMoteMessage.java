@@ -23,18 +23,6 @@ public class RippleMoteMessage {
     private List<RippleData> data;
     // Logger
     private static Logger log = Logger.getLogger(Config.LOGGER_NAME);
-    // Index constants
-    private static final int INDEX_TIMESTAMP_START = 1;
-    private static final int INDEX_TIMESTAMP_END = 4;
-    private static final int INDEX_SENSOR_TYPE = 5;
-    private static final int INDEX_OVERFLOW_COUNT = 0;
-    private static final int INDEX_SAMPLE_COUNT = 6;
-    private static final int INDEX_PULSE_START = 7;
-    private static final int INDEX_PULSE_END = 8;
-    private static final int INDEX_BLOOD_OX = 9;
-    private static final int INDEX_ECG_START = 8;
-    private static final int INDEX_ECG_OFFSET = 7;
-    private static final int INDEX_TEMPERATURE = 7;
     // Size (in bytes) of data
     private static final int SIZE_OVERFLOW_COUNT = 1;
     private static final int SIZE_TIMESTAMP = 4;
@@ -45,6 +33,22 @@ public class RippleMoteMessage {
     private static final int SIZE_ECG_OFFSET = 1;
     private static final int SIZE_ECG_DATA = 2;
     private static final int SIZE_TEMPERATURE = 1;
+    private static final int SIZE_PULSE_OX_PERIOD = 2;
+    private static final int SIZE_TEMPERATURE_PERIOD = 2;
+    // Index constants
+    private static final int INDEX_OVERFLOW_COUNT = 0;
+    private static final int INDEX_TIMESTAMP_START = INDEX_OVERFLOW_COUNT + 1; // 1
+    private static final int INDEX_TIMESTAMP_END = INDEX_TIMESTAMP_START + SIZE_TIMESTAMP - 1; // 4
+    private static final int INDEX_SENSOR_TYPE = INDEX_TIMESTAMP_END + 1; // 5
+    private static final int INDEX_SAMPLE_COUNT = INDEX_SENSOR_TYPE + 1; // 6
+    private static final int INDEX_PULSE_OX_PERIOD = INDEX_SAMPLE_COUNT + 1; // 7
+    private static final int INDEX_TEMPERATURE_PERIOD = INDEX_SAMPLE_COUNT + 1; // 7
+    private static final int INDEX_ECG_PERIOD = INDEX_SAMPLE_COUNT + 1; // 7
+    private static final int INDEX_PULSE_START = INDEX_PULSE_OX_PERIOD + 2; // 9
+    private static final int INDEX_PULSE_END = INDEX_PULSE_START + SIZE_PULSE - 1; // 10
+    private static final int INDEX_BLOOD_OX = INDEX_PULSE_END + 1; // 11
+    private static final int INDEX_ECG_START = INDEX_ECG_PERIOD + 1; // 8
+    private static final int INDEX_TEMPERATURE = INDEX_TEMPERATURE_PERIOD + 2; // 9
 
     /**
      * Parse listener observation to a RippleMoteMessage
@@ -131,7 +135,7 @@ public class RippleMoteMessage {
             // got ecg reading message
             int numEcgSamples = (message[INDEX_SAMPLE_COUNT] & 0x00ff);
 
-            int sampleOffsets = (message[INDEX_ECG_OFFSET] & 0xff);
+            int sampleOffsets = (message[INDEX_ECG_PERIOD] & 0xff);
             int[] data = new int[numEcgSamples];
             long tSampleTime;
 
