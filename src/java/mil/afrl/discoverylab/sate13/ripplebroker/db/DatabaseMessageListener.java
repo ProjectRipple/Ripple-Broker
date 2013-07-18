@@ -80,9 +80,13 @@ public class DatabaseMessageListener implements Observer {
             switch (msg.getSensorType()) {
                 case SENSOR_PULSE_OX:
                     for (RippleData value : data) {
+                        
+                        // Set timestamp for samples
+                        sensorTimestampEntry.setValue("" + ((PulseOxData) value).sampleTime);
+                        
                         valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_PULSE.getValue());
                         valueEntry.setValue("" + ((PulseOxData) value).pulse);
-
+                        
                         this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
 
                         valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_BLOOD_OX.getValue());
@@ -105,6 +109,7 @@ public class DatabaseMessageListener implements Observer {
                     valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_TEMPERATURE.getValue());
                     for (RippleData value : data) {
                         valueEntry.setValue("" + ((TemperatureData) value).temperature);
+                        sensorTimestampEntry.setValue("" + ((TemperatureData) value).sampleTime);
                         this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
                     }
                     break;
