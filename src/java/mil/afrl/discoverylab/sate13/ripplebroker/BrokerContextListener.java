@@ -25,6 +25,7 @@ import javax.servlet.ServletContextListener;
 import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseMessageListener;
+import mil.afrl.discoverylab.sate13.ripplebroker.network.MulticastSendListener;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import org.apache.log4j.Logger;
@@ -43,6 +44,7 @@ public class BrokerContextListener implements ServletContextListener {
     private UDPListener task;
     // logger
     private Logger log;
+    private MulticastSendListener multicastTask;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
@@ -53,7 +55,7 @@ public class BrokerContextListener implements ServletContextListener {
         // Initalize the database helper
         this.initDatabase(sce.getServletContext());
         // Get executor
-        executor = Executors.newSingleThreadExecutor();
+        this.executor = Executors.newFixedThreadPool(2);
         try {
             // listen on anylocal address (:: or 0:0:0:0:0:0:0:0 for IPv6)
             task = new UDPListener(Inet6Address.getByAddress(new byte[16]), Config.LISTEN_PORT);
@@ -62,11 +64,17 @@ public class BrokerContextListener implements ServletContextListener {
                 log.info("Enabling auto database insert.");
                 task.addObserver(new DatabaseMessageListener());
             }
+            
+            this.multicastTask = new MulticastSendListener();
+            this.task.addObserver(this.multicastTask);
+            
         } catch (UnknownHostException ex) {
             log.error("UnknownHostException", ex);
         }
         // Start listen server
         executor.submit(task);
+        
+        executor.submit(this.multicastTask);
 
         log.debug("Context Initialized");
 
@@ -131,6 +139,8 @@ public class BrokerContextListener implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent sce) {
         // Stop listen server
         task.stop();
+        // top multicast sender
+        this.multicastTask.stop();
         // Stop execution service tasks
         executor.shutdown();
         log.debug("Context destroyed");
