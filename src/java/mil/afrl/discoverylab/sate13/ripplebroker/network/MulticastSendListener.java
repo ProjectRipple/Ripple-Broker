@@ -35,19 +35,36 @@ public class MulticastSendListener implements Observer, Runnable {
 
     // Logger
     private static final Logger log = Logger.getLogger(Config.LOGGER_NAME);
-    private static final int MCAST_PORT = 1222;
+    // Constants
+    private static String MCAST_ADDR = "ff02::1";
+    private static int MCAST_PORT = 1222;
+    private static String MCAST_INTERFACE = "wlan0";
+    // Multicast group joined
     private InetAddress group;
+    // Reference to socket
     private MulticastSocket socket;
+    // Database helper
     private final DatabaseHelper databaseHelper;
 
     public MulticastSendListener() {
+        // Get database helper
         this.databaseHelper = DatabaseHelper.getInstance(null);
+        
+        // Load config variables
+        this.reloadConfig();
+        // setup socket
+        this.setupSocket();
 
+    }
+    
+    private void setupSocket()
+    {
         try {
-            this.group = Inet6Address.getByName("ff02::1");
-            this.socket = new MulticastSocket(1222);
-
-            this.socket.joinGroup(new InetSocketAddress(this.group, MCAST_PORT), NetworkInterface.getByName("wlan0"));
+            // Get group and socket object
+            this.group = Inet6Address.getByName(MCAST_ADDR);
+            this.socket = new MulticastSocket(MCAST_PORT);
+            // join the group
+            this.socket.joinGroup(new InetSocketAddress(this.group, MCAST_PORT), NetworkInterface.getByName(MCAST_INTERFACE));
 
             log.debug("Network interface: " + this.socket.getNetworkInterface().getDisplayName());
 
@@ -57,8 +74,20 @@ public class MulticastSendListener implements Observer, Runnable {
         } catch (IOException ex) {
             log.error("IOException MulticastSocket ", ex);
         }
-
+        
     }
+    
+    /**
+     * Reload the configuration options. Does NOT restart the socket connection.
+     */
+    private void reloadConfig()
+    {
+        MCAST_ADDR = Config.MCAST_ADDR;
+        MCAST_PORT = Config.MCAST_PORT;
+        MCAST_INTERFACE = Config.MCAST_INTERFACE;
+    }
+    
+    
 
     @Override
     public void update(Observable o, Object arg) {
@@ -82,7 +111,7 @@ public class MulticastSendListener implements Observer, Runnable {
         // Determine data type
         switch (msg.getSensorType()) {
             case SENSOR_PULSE_OX:
-                // Only care about most recent data
+                // get Json objects for vitals
                 Vital pulse = new Vital(patientId, msg.getSystemTime(), msg.getTimestamp(),
                     msg.getSensorType().getValue() + "", VITAL_TYPES.VITAL_PULSE.getValue() + "",
                     ((RippleMoteMessage.PulseOxData) latestReading).pulse);
@@ -100,6 +129,7 @@ public class MulticastSendListener implements Observer, Runnable {
                 // Don't set ecg this way
                 break;
             case SENSOR_TEMPERATURE:
+                // get Json objects for vitals
                 Vital temperature = new Vital(patientId, msg.getSystemTime(), msg.getTimestamp(),
                     msg.getSensorType().getValue() + "", VITAL_TYPES.VITAL_TEMPERATURE.getValue() + "",
                     ((RippleMoteMessage.TemperatureData) latestReading).temperature);
@@ -135,24 +165,26 @@ public class MulticastSendListener implements Observer, Runnable {
     @Override
     public void run() {
 
-        String message = "{patient:{name:null,id:null},vital{pulse:22}}";
-
-        DatagramPacket send = new DatagramPacket(message.getBytes(), message.length(), this.group, MCAST_PORT);
-        log.debug("MulticastSendListener run start");
-        for (int i = 0; i < 100; i++) {
-            try {
-                log.debug("About to send on multicast socket");
-                this.socket.send(send);
-                log.debug("Test message sent");
-                Thread.sleep(1000);
-            } catch (IOException ex) {
-
-                log.error("Failed to send, exiting", ex);
-                return;
-            } catch (InterruptedException ex) {
-                log.error("My sleep was interrupted", ex);
-            }
-        }
+        // TODO: something?
+        // Testing code below
+//        String message = "{patient:{name:null,id:null},vital{pulse:22}}";
+//
+//        DatagramPacket send = new DatagramPacket(message.getBytes(), message.length(), this.group, MCAST_PORT);
+//        log.debug("MulticastSendListener run start");
+//        for (int i = 0; i < 100; i++) {
+//            try {
+//                log.debug("About to send on multicast socket");
+//                this.socket.send(send);
+//                log.debug("Test message sent");
+//                Thread.sleep(1000);
+//            } catch (IOException ex) {
+//
+//                log.error("Failed to send, exiting", ex);
+//                return;
+//            } catch (InterruptedException ex) {
+//                log.error("My sleep was interrupted", ex);
+//            }
+//        }
 
     }
 

@@ -14,7 +14,7 @@
     </context-param>
     <context-param>
         <param-name>database.user</param-name>
-        <param-value>root</param-value>
+        <param-value>ripple</param-value>
     </context-param>
     <context-param>
         <param-name>database.password</param-name>
@@ -34,6 +34,22 @@
         <description>Name of logger</description>
         <param-name>logger.name</param-name>
         <param-value>ripplebrokerlogger</param-value>
+    </context-param>
+    <context-param>
+        <description>Port for multicast sending
+</description>
+        <param-name>mcast.port</param-name>
+        <param-value>1222</param-value>
+    </context-param>
+    <context-param>
+        <description>Multicast group to join</description>
+        <param-name>mcast.group</param-name>
+        <param-value>ff02::1</param-value>
+    </context-param>
+    <context-param>
+        <description>Network Interface name to join multicast group on</description>
+        <param-name>mcast.interface</param-name>
+        <param-value>wlan0</param-value>
     </context-param>
     <listener>
         <listener-class>mil.afrl.discoverylab.sate13.ripplebroker.BrokerContextListener</listener-class>

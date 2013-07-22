@@ -172,8 +172,6 @@ public class RippleMoteMessage {
                 data[i] |= (message[buf_count] & 0xff);
                 data[i] = (data[i] << 8) | (message[buf_count + 1] & 0xff);
                 // find samples actual time
-                int temp = (sampleOffsets*(numEcgSamples - (i+1)));
-                log.debug("temp: " + temp);
                 tSampleTime = (result.timestamp - (sampleOffsets*(numEcgSamples - (i+1))));
                 // add to data array
                 tData.add(new ECGData(tSampleTime, sampleOffsets, data[i]));

@@ -64,16 +64,16 @@ public class BrokerContextListener implements ServletContextListener {
                 log.info("Enabling auto database insert.");
                 task.addObserver(new DatabaseMessageListener());
             }
-            
+
             this.multicastTask = new MulticastSendListener();
             this.task.addObserver(this.multicastTask);
-            
+
         } catch (UnknownHostException ex) {
             log.error("UnknownHostException", ex);
         }
         // Start listen server
         executor.submit(task);
-        
+
         executor.submit(this.multicastTask);
 
         log.debug("Context Initialized");
@@ -107,6 +107,21 @@ public class BrokerContextListener implements ServletContextListener {
 
         // Load database insert option from config, only the word true (ignoring case) will result in a boolean true value
         Config.AUTO_DATABASE_INSERT = Boolean.parseBoolean(ctx.getInitParameter("database.autoinsert"));
+        
+        // Load multicast group address
+        Config.MCAST_ADDR = ctx.getInitParameter("mcast.group");
+        
+        // Load multicast interface name
+        Config.MCAST_INTERFACE = ctx.getInitParameter("mcast.interface");
+        
+        // Load multicast port number
+        try {
+            Config.MCAST_PORT = Integer.parseInt(ctx.getInitParameter("mcast.port"));
+        } catch (NumberFormatException ne) {
+            System.out.println("Error: Multicast port init parameter is not an integer. Parameter=" + ctx.getInitParameter("motelisten.port"));
+            Config.MCAST_PORT = 1222;
+            System.out.println("Falling back to default port " + Config.MCAST_PORT);
+        }
     }
 
     /**
@@ -185,12 +200,12 @@ public class BrokerContextListener implements ServletContextListener {
             while ((line = br.readLine()) != null) {
                 String[] splits = line.split(";");
                 vList.add(new Vital(vid++,
-                                    pid,
-                                    new Date(),
-                                    (int) (Double.parseDouble(splits[3]) * 1000.0),
-                                    Integer.toString(Reference.SENSOR_TYPES.SENSOR_ECG.getValue()),
-                                    Integer.toString(Reference.VITAL_TYPES.VITAL_ECG.getValue()),
-                                    (int) (Double.parseDouble(splits[4]) * 10000000.0)));
+                    pid,
+                    new Date(),
+                    (int) (Double.parseDouble(splits[3]) * 1000.0),
+                    Integer.toString(Reference.SENSOR_TYPES.SENSOR_ECG.getValue()),
+                    Integer.toString(Reference.VITAL_TYPES.VITAL_ECG.getValue()),
+                    (int) (Double.parseDouble(splits[4]) * 10000000.0)));
             }
         } catch (IOException ex) {
             log.error("Failed to read Shimmer data from file: " + file, ex);
