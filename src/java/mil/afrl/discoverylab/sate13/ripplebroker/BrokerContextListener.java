@@ -1,5 +1,6 @@
 package mil.afrl.discoverylab.sate13.ripplebroker;
 
+import mil.afrl.discoverylab.sate13.ripplebroker.network.UDPListener;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -19,6 +20,7 @@ import javax.servlet.ServletContextListener;
 import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseMessageListener;
+import mil.afrl.discoverylab.sate13.ripplebroker.network.MulticastSendListener;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import org.apache.log4j.Logger;
@@ -37,6 +39,7 @@ public class BrokerContextListener implements ServletContextListener {
     private UDPListener task;
     // logger
     private Logger log;
+    private MulticastSendListener multicastTask;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
@@ -47,7 +50,7 @@ public class BrokerContextListener implements ServletContextListener {
         // Initalize the database helper
         this.initDatabase(sce.getServletContext());
         // Get executor
-        executor = Executors.newSingleThreadExecutor();
+        this.executor = Executors.newFixedThreadPool(2);
         try {
             // listen on anylocal address (:: or 0:0:0:0:0:0:0:0 for IPv6)
             task = new UDPListener(Inet6Address.getByAddress(new byte[16]), Config.LISTEN_PORT);
@@ -56,11 +59,17 @@ public class BrokerContextListener implements ServletContextListener {
                 log.info("Enabling auto database insert.");
                 task.addObserver(new DatabaseMessageListener());
             }
+
+            this.multicastTask = new MulticastSendListener();
+            this.task.addObserver(this.multicastTask);
+
         } catch (UnknownHostException ex) {
             log.error("UnknownHostException", ex);
         }
         // Start listen server
         executor.submit(task);
+
+        executor.submit(this.multicastTask);
 
         log.debug("Context Initialized");
 
@@ -93,6 +102,21 @@ public class BrokerContextListener implements ServletContextListener {
 
         // Load database insert option from config, only the word true (ignoring case) will result in a boolean true value
         Config.AUTO_DATABASE_INSERT = Boolean.parseBoolean(ctx.getInitParameter("database.autoinsert"));
+        
+        // Load multicast group address
+        Config.MCAST_ADDR = ctx.getInitParameter("mcast.group");
+        
+        // Load multicast interface name
+        Config.MCAST_INTERFACE = ctx.getInitParameter("mcast.interface");
+        
+        // Load multicast port number
+        try {
+            Config.MCAST_PORT = Integer.parseInt(ctx.getInitParameter("mcast.port"));
+        } catch (NumberFormatException ne) {
+            System.out.println("Error: Multicast port init parameter is not an integer. Parameter=" + ctx.getInitParameter("motelisten.port"));
+            Config.MCAST_PORT = 1222;
+            System.out.println("Falling back to default port " + Config.MCAST_PORT);
+        }
     }
 
     /**
@@ -125,6 +149,8 @@ public class BrokerContextListener implements ServletContextListener {
     public void contextDestroyed(ServletContextEvent sce) {
         // Stop listen server
         task.stop();
+        // top multicast sender
+        this.multicastTask.stop();
         // Stop execution service tasks
         executor.shutdown();
         log.debug("Context destroyed");
@@ -139,13 +165,13 @@ public class BrokerContextListener implements ServletContextListener {
         // Initalize database helper, context required only on first call to getInstance
         DatabaseHelper db = DatabaseHelper.getInstance(servletContext);
 
-        String ipa = "aaaa:0000:0000:0000:0000:0000:1234:0001";
-        String ipb = "aaaa:0000:0000:0000:0000:0000:5678:0001";
-
-        insertVitals(extractVitalsFromShimmerDataFile(insertTestPatient(ipa),
-                                                      servletContext.getRealPath("/"),
-                                                      "ShimmerData5"));
-        insertTestPatient(ipb);
+//        String ipa = "aaaa:0000:0000:0000:0000:0000:1234:0001";
+//        String ipb = "aaaa:0000:0000:0000:0000:0000:5678:0001";
+//
+//        insertVitals(extractVitalsFromShimmerDataFile(insertTestPatient(ipa),
+//                                                      servletContext.getRealPath("/"),
+//                                                      "ShimmerData5"));
+//        insertTestPatient(ipb);
     }
 
     private void insertVitals(ArrayList<Vital> vitalsList) {
@@ -169,12 +195,12 @@ public class BrokerContextListener implements ServletContextListener {
             while ((line = br.readLine()) != null) {
                 String[] splits = line.split(";");
                 vList.add(new Vital(vid++,
-                                    pid,
-                                    new Date(),
-                                    (int) (Double.parseDouble(splits[3]) * 1000.0),
-                                    Integer.toString(Reference.SENSOR_TYPES.SENSOR_ECG.getValue()),
-                                    Integer.toString(Reference.VITAL_TYPES.VITAL_ECG.getValue()),
-                                    (int) (Double.parseDouble(splits[4]) * 10000000.0)));
+                    pid,
+                    new Date(),
+                    (int) (Double.parseDouble(splits[3]) * 1000.0),
+                    Integer.toString(Reference.SENSOR_TYPES.SENSOR_ECG.getValue()),
+                    Integer.toString(Reference.VITAL_TYPES.VITAL_ECG.getValue()),
+                    (int) (Double.parseDouble(splits[4]) * 10000000.0)));
             }
         } catch (IOException ex) {
             log.error("Failed to read Shimmer data from file: " + file, ex);
