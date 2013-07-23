@@ -51,7 +51,7 @@ public final class Patient extends Model {
         List<Map.Entry<Reference.TableColumns, String>> entries = new ArrayList<Map.Entry<Reference.TableColumns, String>>();
 
         if (pid != null) {
-            addEntry(entries, PATIENT_TABLE_COLUMNS.ID, Integer.toString(pid));
+            addEntry(entries, PATIENT_TABLE_COLUMNS.PID, Integer.toString(pid));
         }
         addEntry(entries, PATIENT_TABLE_COLUMNS.FIRST_NAME, first_name);
         addEntry(entries, PATIENT_TABLE_COLUMNS.LAST_NAME, last_name);

@@ -215,7 +215,7 @@ public class DatabaseHelper {
             rs.first();
             while (!rs.isAfterLast()) {
                 pList.add(new Patient(
-                        rs.getInt(PATIENT_TABLE_COLUMNS.ID.name()),
+                        rs.getInt(PATIENT_TABLE_COLUMNS.PID.name()),
                         rs.getString(PATIENT_TABLE_COLUMNS.IP_ADDR.name()),
                         rs.getString(PATIENT_TABLE_COLUMNS.FIRST_NAME.name()),
                         rs.getString(PATIENT_TABLE_COLUMNS.LAST_NAME.name()),
@@ -278,12 +278,12 @@ public class DatabaseHelper {
 
     public int getPatientId(InetAddress address) {
         int result;
-        String query = "SELECT id FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
+        String query = "SELECT pid FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
         log.debug("Patient Id query: " + query);
         try {
             CachedRowSet rowset = this.executeQuery(query);
             rowset.last();
-            result = rowset.getInt("id");
+            result = rowset.getInt("pid");
             rowset.close();
         } catch (SQLException ex) {
             log.error("Failed checking for patient id table.", ex);

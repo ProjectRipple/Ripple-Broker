@@ -53,7 +53,7 @@ public class Reference {
 
     public enum PATIENT_TABLE_COLUMNS implements TableColumns {
 
-        ID, IP_ADDR, FIRST_NAME, LAST_NAME, SSN, DOB, SEX, NBC_CONTAMINATION, TYPE
+        PID, IP_ADDR, FIRST_NAME, LAST_NAME, SSN, DOB, SEX, NBC_CONTAMINATION, TYPE
     };
 
     public enum VITAL_TABLE_COLUMNS implements TableColumns {
@@ -64,7 +64,7 @@ public class Reference {
     public static final SimpleDateFormat datetimeFormat = new SimpleDateFormat(DATE_TIME_FORMAT);
     // database table structures
     public static final String PATIENT_TABLE_CREATE = "CREATE TABLE IF NOT EXISTS patient ("
-        + "  id int(11) NOT NULL AUTO_INCREMENT,"
+        + "  pid int(11) NOT NULL AUTO_INCREMENT,"
         + "  ip_addr varchar(42) NOT NULL,"
         + "  first_name varchar(20) DEFAULT NULL,"
         + "  last_name varchar(20) DEFAULT NULL,"
@@ -73,7 +73,7 @@ public class Reference {
         + "  sex varchar(6) DEFAULT NULL,"
         + "  nbc_contamination int(1) DEFAULT NULL,"
         + "  type varchar(10) DEFAULT NULL,"
-        + "  PRIMARY KEY (id),"
+        + "  PRIMARY KEY (pid),"
         + "  UNIQUE KEY ip_addr (ip_addr)"
         + ");";
     public static final String VITAL_TABLE_CREATE = "CREATE TABLE IF NOT EXISTS vital ("
@@ -85,6 +85,6 @@ public class Reference {
         + "  value_type varchar(15) DEFAULT NULL,"
         + "  value int(11) DEFAULT NULL,"
         + "  PRIMARY KEY (vid,pid),"
-        + "  FOREIGN KEY (pid) REFERENCES patient (id)"
+        + "  FOREIGN KEY (pid) REFERENCES patient (pid)"
         + ");";
 }
