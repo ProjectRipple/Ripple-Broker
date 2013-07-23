@@ -28,6 +28,7 @@ import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseMessageListener;
 import mil.afrl.discoverylab.sate13.ripplebroker.network.MulticastSendListener;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.UDPToRippleListener;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -45,6 +46,8 @@ public class BrokerContextListener implements ServletContextListener {
     // logger
     private Logger log;
     private MulticastSendListener multicastTask;
+    private UDPToRippleListener rippleListener;
+    private DatabaseMessageListener databaseListener;
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
@@ -58,15 +61,22 @@ public class BrokerContextListener implements ServletContextListener {
         this.executor = Executors.newFixedThreadPool(2);
         try {
             // listen on anylocal address (:: or 0:0:0:0:0:0:0:0 for IPv6)
-            task = new UDPListener(Inet6Address.getByAddress(new byte[16]), Config.LISTEN_PORT);
+            this.task = new UDPListener(Inet6Address.getByAddress(new byte[16]), Config.LISTEN_PORT);
+            // convertor to reduce parsing of ripple messages
+            this.rippleListener = new UDPToRippleListener();
+            // add convertor as listener to UDP
+            this.task.addObserver(this.rippleListener);
             if (Config.AUTO_DATABASE_INSERT) {
                 // Enable auto database inserver if config says so
                 log.info("Enabling auto database insert.");
-                task.addObserver(new DatabaseMessageListener());
+                this.databaseListener = new DatabaseMessageListener();
+                //task.addObserver(this.databaseListener);
+                this.rippleListener.addObserver(this.databaseListener);
             }
 
             this.multicastTask = new MulticastSendListener();
-            this.task.addObserver(this.multicastTask);
+            //this.task.addObserver(this.multicastTask);
+            this.rippleListener.addObserver(this.multicastTask);
 
         } catch (UnknownHostException ex) {
             log.error("UnknownHostException", ex);

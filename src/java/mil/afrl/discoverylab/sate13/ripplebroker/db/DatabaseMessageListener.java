@@ -47,6 +47,11 @@ public class DatabaseMessageListener implements Observer {
             UDPListenerObservation obs = (UDPListenerObservation) arg;
             // attempt parse of observation data
             msg = RippleMoteMessage.parse(obs);
+        } else if(arg instanceof RippleMoteMessage) {
+            msg = (RippleMoteMessage) arg;
+        } else {
+            log.debug("Unknown object observed: " + arg.getClass().getName());
+            return;
         }
 
         if (msg != null) {

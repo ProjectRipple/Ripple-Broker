@@ -98,6 +98,8 @@ public class MulticastSendListener implements Observer, Runnable {
             UDPListenerObservation obs = (UDPListenerObservation) arg;
             // attempt parse of observation data
             msg = RippleMoteMessage.parse(obs);
+        } else if(arg instanceof RippleMoteMessage) {
+            msg = (RippleMoteMessage) arg;
         } else {
             log.debug("Unknown object observed: " + arg.getClass().getName());
             return;
