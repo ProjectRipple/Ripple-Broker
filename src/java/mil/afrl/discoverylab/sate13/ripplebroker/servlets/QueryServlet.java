@@ -1,6 +1,7 @@
 package mil.afrl.discoverylab.sate13.ripplebroker.servlets;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -30,11 +31,14 @@ import org.apache.log4j.Logger;
 public class QueryServlet extends HttpServlet {
 
     private static DatabaseHelper dbh;
-    private static Logger log = Logger.getLogger(Config.LOGGER_NAME);
+    private static Logger log;
+    private static Gson gson;
 
     @Override
     public void init() {
         dbh = DatabaseHelper.getInstance(null);
+        log = Logger.getLogger(Config.LOGGER_NAME);
+        gson = new GsonBuilder().setDateFormat(Reference.DATE_TIME_FORMAT).create();
     }
 
     /**
@@ -102,7 +106,7 @@ public class QueryServlet extends HttpServlet {
         List<Patient> pList = dbh.getAllpatients();
 
         if (pList != null && !pList.isEmpty()) {
-            jstr += new Gson().toJson(pList) + "}}";
+            jstr += gson.toJson(pList) + "}}";
         } else {
             jstr += "[]}}";
         }
@@ -129,7 +133,7 @@ public class QueryServlet extends HttpServlet {
                                                            vidi,
                                                            limit);
             if (vList != null && !vList.isEmpty()) {
-                jstr += new Gson().toJson(vList) + "}}";
+                jstr += gson.toJson(vList) + "}}";
             } else {
                 jstr += "[]}}";
             }
