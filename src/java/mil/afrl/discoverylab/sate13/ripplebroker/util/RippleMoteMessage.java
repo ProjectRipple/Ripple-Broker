@@ -79,8 +79,8 @@ public class RippleMoteMessage {
         result.timestamp = timestamp;
         result.systemTime = obs.getReceiveTime();
 
-        log.debug("Overflow count: " + overflowCount);
-        log.debug("Timestamp: " + timestamp);
+        //log.debug("Overflow count: " + overflowCount);
+        //log.debug("Timestamp: " + timestamp);
         
         // Get sensor type (1 byte unsigned)
         int type = (message[INDEX_SENSOR_TYPE] & 0xff);
@@ -96,9 +96,9 @@ public class RippleMoteMessage {
             long tSampleTime;
             
             // heart rate
-            log.debug("Reported pulse and blood oxygen:");
-            log.debug("Num samples: " + numPulseOxSamples);
-            log.debug("Period is " + spo2SamplePeriod + " ms");
+            //log.debug("Reported pulse and blood oxygen:");
+            //log.debug("Num samples: " + numPulseOxSamples);
+            //log.debug("Period is " + spo2SamplePeriod + " ms");
 
             // iterate through multiple samples(if provided)
             for (int i = 0, j = INDEX_PULSE_START; i < numPulseOxSamples; i++, j += SIZE_PULSE + SIZE_BLOOD_OX) {
@@ -116,9 +116,9 @@ public class RippleMoteMessage {
 
                 // add point to list
                 tData.add(new PulseOxData(tSampleTime,pulse, bloodOx));
-                log.debug("Time: " + ((PulseOxData)tData.get(tData.size()-1)).sampleTime );
-                log.debug("Pulse (BPM): " + pulse);
-                log.debug("Blood oxygen: " + bloodOx);
+                //log.debug("Time: " + ((PulseOxData)tData.get(tData.size()-1)).sampleTime );
+                //log.debug("Pulse (BPM): " + pulse);
+                //log.debug("Blood oxygen: " + bloodOx);
             }
 
 
@@ -132,9 +132,9 @@ public class RippleMoteMessage {
             temperaturePeriod = (temperaturePeriod << 8) | (message[INDEX_TEMPERATURE_PERIOD + 1] & 0x00ff);
             long tSampleTime;
 
-            log.debug("Reported temperature:");
-            log.debug("Num samples: " + numTemperatureSamples);
-            log.debug("Period is " + temperaturePeriod + " ms");
+            //log.debug("Reported temperature:");
+            //log.debug("Num samples: " + numTemperatureSamples);
+            //log.debug("Period is " + temperaturePeriod + " ms");
             // iterate through multiple samples(if provided)
             for (int i = 0, j = INDEX_TEMPERATURE; i < numTemperatureSamples; i++, j += SIZE_TEMPERATURE) {
                 
@@ -148,9 +148,9 @@ public class RippleMoteMessage {
                 // Add point to list
                 tData.add(new TemperatureData(tSampleTime,temperature));
                 
-                log.debug("Time1: " + tSampleTime);
+                //log.debug("Time1: " + tSampleTime);
                 
-                log.debug("Time: " + ((TemperatureData)tData.get(tData.size()-1)).sampleTime + " Temperature: " + temperature);
+                //log.debug("Time: " + ((TemperatureData)tData.get(tData.size()-1)).sampleTime + " Temperature: " + temperature);
             }
 
 
@@ -164,8 +164,8 @@ public class RippleMoteMessage {
             int[] data = new int[numEcgSamples];
             long tSampleTime;
 
-            log.debug("Reported ECG:");
-            log.debug("Offset is " + sampleOffsets + " ms");
+            //log.debug("Reported ECG:");
+            //log.debug("Offset is " + sampleOffsets + " ms");
             // iterate through multiple readings
             for (int i = 0, buf_count = INDEX_ECG_START; i < numEcgSamples; i++, buf_count += SIZE_ECG_DATA) {
                 // get adc value
@@ -175,7 +175,7 @@ public class RippleMoteMessage {
                 tSampleTime = (result.timestamp - (sampleOffsets*(numEcgSamples - (i+1))));
                 // add to data array
                 tData.add(new ECGData(tSampleTime, sampleOffsets, data[i]));
-                log.debug("Time: " + ((ECGData)tData.get(tData.size()-1)).sampleTime + " Data: " + data[i]);
+                //log.debug("Time: " + ((ECGData)tData.get(tData.size()-1)).sampleTime + " Data: " + data[i]);
             }
 
 

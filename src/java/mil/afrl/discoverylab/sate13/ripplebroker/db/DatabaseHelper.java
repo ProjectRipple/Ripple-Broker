@@ -191,7 +191,7 @@ public class DatabaseHelper {
     public boolean patientExists(InetAddress address) {
         boolean result = false;
         String query = "SELECT COUNT(*) as count FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
-        log.debug("Patient exists query: " + query);
+        //log.debug("Patient exists query: " + query);
         try {
             CachedRowSet rowset = this.executeQuery(query);
             rowset.last();
@@ -279,7 +279,7 @@ public class DatabaseHelper {
     public int getPatientId(InetAddress address) {
         int result;
         String query = "SELECT id FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
-        log.debug("Patient Id query: " + query);
+        //log.debug("Patient Id query: " + query);
         try {
             CachedRowSet rowset = this.executeQuery(query);
             rowset.last();

@@ -91,6 +91,7 @@ public class MulticastSendListener implements Observer, Runnable {
 
     @Override
     public void update(Observable o, Object arg) {
+        log.debug("MulticastSend update called");
         RippleMoteMessage msg = null;
         // check this is a UDP listener observation
         if (arg instanceof UDPListenerObservation) {
@@ -159,6 +160,7 @@ public class MulticastSendListener implements Observer, Runnable {
                 log.error("Failed to send", ex);
             }
         }
+        log.debug("MulticastSend update finished");
 
     }
 
