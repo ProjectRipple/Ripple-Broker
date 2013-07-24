@@ -40,7 +40,7 @@ public class DatabaseMessageListener implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
-        log.debug("DatabaseMessage update called");
+//        log.debug("DatabaseMessage update called");
         RippleMoteMessage msg = null;
         // check this is a UDP listener observation
         if (arg instanceof UDPListenerObservation) {
@@ -124,6 +124,6 @@ public class DatabaseMessageListener implements Observer {
             }
         }
         
-        log.debug("DatabaseMessage update finished");
+//        log.debug("DatabaseMessage update finished");
     }
 }
