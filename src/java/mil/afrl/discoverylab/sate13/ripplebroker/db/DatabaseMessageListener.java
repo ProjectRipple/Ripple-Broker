@@ -2,7 +2,9 @@ package mil.afrl.discoverylab.sate13.ripplebroker.db;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
@@ -103,13 +105,38 @@ public class DatabaseMessageListener implements Observer {
                     }
                     break;
                 case SENSOR_ECG:
-                    valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_ECG.getValue());
+//                    valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_ECG.getValue());
+                    List<Map<Reference.TableColumns, String>> rows = new ArrayList<Map<Reference.TableColumns,String>>();
+                    Map<Reference.TableColumns, String> curRow;
+                    List<Reference.TableColumns> columns = new ArrayList<Reference.TableColumns>();
+                    // Initialize some strings that are the same for all rows
+                    String pid = "" + patientId;
+                    String serverTime = Reference.datetimeFormat.format(msg.getSystemTime());
+                    String sensorType = "" + msg.getSensorType().getValue();
+                    String ecgValueType = "" + VITAL_TYPES.VITAL_ECG.getValue();
+                    // Add columns to list
+                    columns.add(VITAL_TABLE_COLUMNS.PID);
+                    columns.add(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP);
+                    columns.add(VITAL_TABLE_COLUMNS.SENSOR_TYPE);
+                    columns.add(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP);
+                    columns.add(VITAL_TABLE_COLUMNS.VALUE);
+                    columns.add(VITAL_TABLE_COLUMNS.VALUE_TYPE);
+                    // input entries
                     for (RippleData value : data) {
                         // TODO: convert ADC value to mV? Where?
-                        valueEntry.setValue("" + ((ECGData) value).adcReading);
-                        sensorTimestampEntry.setValue("" + ((ECGData) value).sampleTime);
-                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
+                        //valueEntry.setValue("" + ((ECGData) value).adcReading);
+                        //sensorTimestampEntry.setValue("" + ((ECGData) value).sampleTime);
+                        //this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
+                        curRow = new HashMap<Reference.TableColumns, String>();
+                        curRow.put(VITAL_TABLE_COLUMNS.PID, pid);
+                        curRow.put(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, serverTime);
+                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TYPE, sensorType);
+                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + ((ECGData) value).sampleTime);
+                        curRow.put(VITAL_TABLE_COLUMNS.VALUE, "" + ((ECGData) value).adcReading);
+                        curRow.put(VITAL_TABLE_COLUMNS.VALUE_TYPE, ecgValueType);
+                        rows.add(curRow);
                     }
+                    this.databaseHelper.bulkInsert(Reference.TABLE_NAMES.VITAL, columns, rows);
                     break;
                 case SENSOR_TEMPERATURE:
                     valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_TEMPERATURE.getValue());
