@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import javax.servlet.ServletContext;
 import javax.sql.rowset.CachedRowSet;
@@ -19,6 +20,7 @@ import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITAL_TABLE_COLUMNS;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.PATIENT_TABLE_COLUMNS;
+import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.TableColumns;
 import org.apache.log4j.Logger;
 
 /**
@@ -182,6 +184,62 @@ public class DatabaseHelper {
         }
     }
 
+    public void bulkInsert(Reference.TABLE_NAMES table, List<Reference.TableColumns> columns, List<Map<Reference.TableColumns, String>> rows) {
+        // check if there is something to insert
+        if (columns == null || columns.isEmpty()) {
+            return;
+        }
+        if (rows == null || rows.isEmpty()) {
+            return;
+        }
+        // initalize string builder
+        StringBuilder builder = new StringBuilder("INSERT INTO " + table.toString().toLowerCase() + " (");
+        // add column names
+        for (TableColumns column : columns) {
+            builder.append(column.toString().toLowerCase());
+            builder.append(",");
+        }
+        // remove last comma
+        builder.deleteCharAt(builder.length() - 1);
+        // Build values string
+        builder.append(" ) VALUES ");
+        for (Map<TableColumns, String> row : rows) {
+            // Add start (
+            builder.append(" (");
+            for (TableColumns column : columns) {
+                if (row.containsKey(column)) {
+                    // String in quotes
+                    builder.append("'");
+                    builder.append(row.get(column));
+                    builder.append("'");
+                } else {
+                    // If a value is missing, try inserting NULL
+                    builder.append("NULL");
+                }
+                builder.append(",");
+            }
+
+            // remove last comma for row of values
+            builder.deleteCharAt(builder.length() - 1);
+            // add end )
+            builder.append("),");
+        }
+        builder.deleteCharAt(builder.length() - 1);
+        // add ; to end query
+        builder.append(";");
+        // debug statement
+//        log.debug("Bulk insert query: " + builder.toString());
+        // execute query
+        try {
+            this.execute(builder.toString());
+        } catch (MySQLIntegrityConstraintViolationException dupex) {
+            //log.debug("Omitting duplicate entry.");
+        } catch (SQLException ex) {
+            log.error("Error with inserting row.\nQuery String: " + builder.toString(), ex);
+        }
+
+    }
+
     /**
      * Check if patient exists based on IP address
      *
@@ -253,20 +311,20 @@ public class DatabaseHelper {
         }
 
         log.debug("Querying vitals for Patient: " + pid + ", vidi: " + vidi
-                  + ", limit: " + limit);
+            + ", limit: " + limit);
         ArrayList<Vital> vList = new ArrayList<Vital>();
         try {
             CachedRowSet rs = this.executeQuery(q.toString());
             rs.first();
             while (!rs.isAfterLast()) {
                 vList.add(new Vital(
-                        rs.getInt(VITAL_TABLE_COLUMNS.VID.name()),
-                        rs.getInt(VITAL_TABLE_COLUMNS.PID.name()),
-                        rs.getDate(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP.name()),
-                        rs.getLong(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP.name()),
-                        rs.getString(VITAL_TABLE_COLUMNS.SENSOR_TYPE.name()),
-                        rs.getString(VITAL_TABLE_COLUMNS.VALUE_TYPE.name()),
-                        rs.getInt(VITAL_TABLE_COLUMNS.VALUE.name())));
+                    rs.getInt(VITAL_TABLE_COLUMNS.VID.name()),
+                    rs.getInt(VITAL_TABLE_COLUMNS.PID.name()),
+                    rs.getDate(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP.name()),
+                    rs.getLong(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP.name()),
+                    rs.getString(VITAL_TABLE_COLUMNS.SENSOR_TYPE.name()),
+                    rs.getString(VITAL_TABLE_COLUMNS.VALUE_TYPE.name()),
+                    rs.getInt(VITAL_TABLE_COLUMNS.VALUE.name())));
                 rs.next();
             }
             rs.close();
@@ -278,8 +336,9 @@ public class DatabaseHelper {
 
     /**
      * Get a patient's ID from database or -1 if patient is not found
+     *
      * @param address
-     * @return 
+     * @return
      */
     public int getPatientId(InetAddress address) {
         int result;

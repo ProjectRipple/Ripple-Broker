@@ -23,6 +23,8 @@ public class RippleMoteMessage {
     private List<RippleData> data;
     // Logger
     private static Logger log = Logger.getLogger(Config.LOGGER_NAME);
+    // time per overflow
+    private static final long OVERFLOW_TIME = 4294967296L;
     // Size (in bytes) of data
     private static final int SIZE_OVERFLOW_COUNT = 1;
     private static final int SIZE_TIMESTAMP = 4;
@@ -75,6 +77,8 @@ public class RippleMoteMessage {
             timestamp = (timestamp << 8);
         }
         timestamp |= (message[INDEX_TIMESTAMP_END] & 0xff);
+        // Add # of overflows to time
+        timestamp = timestamp + (overflowCount * OVERFLOW_TIME);
 
         result.timestamp = timestamp;
         result.systemTime = obs.getReceiveTime();
