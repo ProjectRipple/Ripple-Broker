@@ -2,6 +2,8 @@ package mil.afrl.discoverylab.sate13.ripplebroker.servlets;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
@@ -14,7 +16,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Patient;
 import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
@@ -33,7 +34,6 @@ public class QueryServlet extends HttpServlet {
     private static DatabaseHelper dbh;
     private static Logger log;
     private static Gson gson;
-    
     private int check;
 
     @Override
@@ -57,14 +57,15 @@ public class QueryServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request,
                                   HttpServletResponse response)
             throws ServletException, IOException {
-        
+
         log.debug("Processing request");
-        
+
         response.setContentType("text/html;charset=UTF-8");
 
         addResponder(request.getRemoteAddr());
 
-        String querytype = request.getParameter("QueryType");
+        String type = request.getParameter("QueryType");
+        String querytype = (type == null) ? "" : type;
         String restr;
 
         switch (Reference.QUERY_TYPES.valueOf(querytype.toUpperCase())) {
@@ -103,27 +104,25 @@ public class QueryServlet extends HttpServlet {
 
     protected String processPatientQueryRequest(HttpServletRequest request)
             throws ServletException, IOException {
-        
-        String type = "patient";
-        String jstr = "{" + type + "s:{" + type + ":";
 
-        List<Patient> pList = dbh.getAllpatients();
+        String jstr = "";
 
-        if (pList != null && !pList.isEmpty()) {
-            jstr += gson.toJson(pList) + "}}";
-        } else {
-            jstr += "[]}}";
+        JsonArray patients = (JsonArray) gson.toJsonTree(dbh.getAllpatients());
+
+        if (patients.size() > 0) {
+            // Create root JSON object
+            JsonObject json = new JsonObject();
+            // Add vitals array to root object
+            json.add("patients", patients);
+            jstr = json.toString();
         }
-
         return jstr;
     }
 
     protected String processVitalQueryRequest(HttpServletRequest request)
             throws ServletException, IOException {
 
-        String type = "vital";
-        String jstr = "{" + type + "s:{" + type + ":";
-
+        String jstr = "";
         String pidstr = request.getParameter("pid");
         String vidistr = request.getParameter("vidi");
         String limitstr = request.getParameter("limit");
@@ -136,17 +135,24 @@ public class QueryServlet extends HttpServlet {
             List<Vital> vList = dbh.getAllVitalsForPatient(pid,
                                                            vidi,
                                                            limit);
-            if (vList != null && !vList.isEmpty()) {
-                jstr += gson.toJson(vList) + "}}";
-            } else {
-                jstr += "[]}}";
+
+            JsonArray vitals = (JsonArray) gson.toJsonTree(vList);
+
+            // Do something if vitals were found
+            if (vitals.size() > 0) {
+                // Create root JSON object
+                JsonObject json = new JsonObject();
+                // Add vitals array to root object
+                json.add("vitals", vitals);
+                // Add patient id to root object
+                json.add("pid", gson.toJsonTree(pid, Integer.class));
+                jstr = json.toString();
             }
         } catch (NumberFormatException nfe) {
             jstr = "{\"Failure\": \"invalid pid: " + pidstr
                    + ", vidi: " + vidistr + ", or limit: "
                    + limitstr + " params\"}";
         }
-
         return jstr;
     }
 
