@@ -1,6 +1,7 @@
 package mil.afrl.discoverylab.sate13.ripplebroker.network;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.io.IOException;
@@ -12,6 +13,10 @@ import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.logging.Level;
@@ -45,6 +50,7 @@ public class MulticastSendListener implements Observer, Runnable {
     private MulticastSocket socket;
     // Database helper
     private final DatabaseHelper databaseHelper;
+    private Gson gson = new GsonBuilder().setDateFormat(Reference.DATE_TIME_FORMAT).create();
 
     public MulticastSendListener() {
         // Get database helper
@@ -91,18 +97,28 @@ public class MulticastSendListener implements Observer, Runnable {
 
     @Override
     public void update(Observable o, Object arg) {
+        log.debug("MulticastSend update called");
         RippleMoteMessage msg = null;
         // check this is a UDP listener observation
         if (arg instanceof UDPListenerObservation) {
             UDPListenerObservation obs = (UDPListenerObservation) arg;
             // attempt parse of observation data
             msg = RippleMoteMessage.parse(obs);
+        } else if(arg instanceof RippleMoteMessage) {
+            msg = (RippleMoteMessage) arg;
         } else {
             log.debug("Unknown object observed: " + arg.getClass().getName());
             return;
         }
         // Get patient ID from DB
         int patientId = this.databaseHelper.getPatientId(msg.getSenderAddress().getAddress());
+        if(patientId < 0){
+            // Insert patient
+            List<Map.Entry<Reference.TableColumns, String>> dataCols = new ArrayList<Map.Entry<Reference.TableColumns, String>>();
+            dataCols.add((new AbstractMap.SimpleEntry<Reference.TableColumns, String>(Reference.PATIENT_TABLE_COLUMNS.IP_ADDR, msg.getSenderAddress().getAddress().getHostAddress())));
+            this.databaseHelper.insertRow(Reference.TABLE_NAMES.PATIENT, dataCols);
+            patientId = this.databaseHelper.getPatientId(msg.getSenderAddress().getAddress());
+        }
         // Only care about latest reading, which also corresponds to sensor timestamp in message
         RippleData latestReading = msg.getData().get(msg.getData().size() - 1);
         // JSON array for vitals
@@ -116,13 +132,13 @@ public class MulticastSendListener implements Observer, Runnable {
                     msg.getSensorType().getValue() + "", VITAL_TYPES.VITAL_PULSE.getValue() + "",
                     ((RippleMoteMessage.PulseOxData) latestReading).pulse);
 
-                vitals.add(new Gson().toJsonTree(pulse));
+                vitals.add(this.gson.toJsonTree(pulse));
 
                 Vital bloodOxygen = new Vital(patientId, msg.getSystemTime(), msg.getTimestamp(),
                     msg.getSensorType().getValue() + "", VITAL_TYPES.VITAL_BLOOD_OX.getValue() + "",
                     ((RippleMoteMessage.PulseOxData) latestReading).bloodOxygen);
 
-                vitals.add(new Gson().toJsonTree(bloodOxygen));
+                vitals.add(this.gson.toJsonTree(bloodOxygen));
 
                 break;
             case SENSOR_ECG:
@@ -134,7 +150,7 @@ public class MulticastSendListener implements Observer, Runnable {
                     msg.getSensorType().getValue() + "", VITAL_TYPES.VITAL_TEMPERATURE.getValue() + "",
                     ((RippleMoteMessage.TemperatureData) latestReading).temperature);
 
-                vitals.add(new Gson().toJsonTree(temperature));
+                vitals.add(this.gson.toJsonTree(temperature));
 
 
                 break;
@@ -149,6 +165,8 @@ public class MulticastSendListener implements Observer, Runnable {
             JsonObject json = new JsonObject();
             // Add vitals array to root object
             json.add("vitals", vitals);
+            // Add patient id to root object
+            json.add("pid", this.gson.toJsonTree(patientId, Integer.class));
 
             // Create send packet for multicast group
             DatagramPacket sendPacket = new DatagramPacket(json.toString().getBytes(), json.toString().length(), this.group, MCAST_PORT);
@@ -159,6 +177,7 @@ public class MulticastSendListener implements Observer, Runnable {
                 log.error("Failed to send", ex);
             }
         }
+        log.debug("MulticastSend update finished");
 
     }
 

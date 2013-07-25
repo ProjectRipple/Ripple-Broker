@@ -80,8 +80,9 @@ public class UDPListener extends Observable implements Runnable {
                 // get sender info from socket address
                 InetSocketAddress sockAddr = ((InetSocketAddress) this.receivePacket.getSocketAddress());
                 // Print out info for debugging
-                log.debug("Message from " + sockAddr.getHostString() + " (" + sockAddr.getAddress().toString() + ") " + " Port:" + sockAddr.getPort());
-                log.debug("Received (" + this.receivePacket.getLength() + ") " + new String(this.receivePacket.getData(), 0, this.receivePacket.getLength()));
+                log.debug("Message(" + this.receivePacket.getLength() + ") from " + sockAddr.getHostString() + " Port: " + sockAddr.getPort());
+                //log.debug("Message from " + sockAddr.getHostString() + " (" + sockAddr.getAddress().toString() + ") " + " Port:" + sockAddr.getPort());
+                //log.debug("Received (" + this.receivePacket.getLength() + ") " + new String(this.receivePacket.getData(), 0, this.receivePacket.getLength()));
 
                 // Set this object as having changed
                 this.setChanged();
@@ -89,11 +90,11 @@ public class UDPListener extends Observable implements Runnable {
                 UDPListenerObservation notify = new UDPListenerObservation(sockAddr, Arrays.copyOf(this.receivePacket.getData(), this.receivePacket.getLength()), new Date());
                 // Notify observers of new data
                 this.notifyObservers(notify);
-
+                log.debug("Notify finished");
                 // Reset packet length to buffer max
                 this.receivePacket.setLength(this.receiveBuffer.length);
                 // Clear packet buffer
-                Arrays.fill(this.receiveBuffer, (byte) 0);
+                //Arrays.fill(this.receiveBuffer, (byte) 0);
             }
         } catch (IOException e) {
             log.debug(e);

@@ -191,7 +191,7 @@ public class DatabaseHelper {
     public boolean patientExists(InetAddress address) {
         boolean result = false;
         String query = "SELECT COUNT(*) as count FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
-        log.debug("Patient exists query: " + query);
+        //log.debug("Patient exists query: " + query);
         try {
             CachedRowSet rowset = this.executeQuery(query);
             rowset.last();
@@ -276,14 +276,23 @@ public class DatabaseHelper {
         return vList;
     }
 
+    /**
+     * Get a patient's ID from database or -1 if patient is not found
+     * @param address
+     * @return 
+     */
     public int getPatientId(InetAddress address) {
         int result;
-        String query = "SELECT pid FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
-        log.debug("Patient Id query: " + query);
+        String query = "SELECT id FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
+        //log.debug("Patient Id query: " + query);
         try {
             CachedRowSet rowset = this.executeQuery(query);
-            rowset.last();
-            result = rowset.getInt("pid");
+            
+            if(rowset.last()){
+                result = rowset.getInt("id");
+            } else {
+                result = -1;
+            }
             rowset.close();
         } catch (SQLException ex) {
             log.error("Failed checking for patient id table.", ex);

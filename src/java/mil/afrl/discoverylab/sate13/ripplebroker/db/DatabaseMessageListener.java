@@ -40,12 +40,18 @@ public class DatabaseMessageListener implements Observer {
 
     @Override
     public void update(Observable o, Object arg) {
+        log.debug("DatabaseMessage update called");
         RippleMoteMessage msg = null;
         // check this is a UDP listener observation
         if (arg instanceof UDPListenerObservation) {
             UDPListenerObservation obs = (UDPListenerObservation) arg;
             // attempt parse of observation data
             msg = RippleMoteMessage.parse(obs);
+        } else if(arg instanceof RippleMoteMessage) {
+            msg = (RippleMoteMessage) arg;
+        } else {
+            log.debug("Unknown object observed: " + arg.getClass().getName());
+            return;
         }
 
         if (msg != null) {
@@ -117,5 +123,7 @@ public class DatabaseMessageListener implements Observer {
                     throw new AssertionError(msg.getSensorType().name());
             }
         }
+        
+        log.debug("DatabaseMessage update finished");
     }
 }
