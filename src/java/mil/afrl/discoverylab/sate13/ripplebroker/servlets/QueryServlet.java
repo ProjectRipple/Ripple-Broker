@@ -33,12 +33,15 @@ public class QueryServlet extends HttpServlet {
     private static DatabaseHelper dbh;
     private static Logger log;
     private static Gson gson;
+    
+    private int check;
 
     @Override
     public void init() {
         dbh = DatabaseHelper.getInstance(null);
         log = Logger.getLogger(Config.LOGGER_NAME);
         gson = new GsonBuilder().setDateFormat(Reference.DATE_TIME_FORMAT).create();
+        check = 0;
     }
 
     /**
@@ -81,6 +84,7 @@ public class QueryServlet extends HttpServlet {
         } finally {
             out.close();
         }
+        check++;
     }
 
     protected void addResponder(String ip_addr) {
