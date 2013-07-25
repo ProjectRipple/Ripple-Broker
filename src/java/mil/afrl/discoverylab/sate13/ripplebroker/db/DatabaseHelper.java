@@ -283,13 +283,13 @@ public class DatabaseHelper {
      */
     public int getPatientId(InetAddress address) {
         int result;
-        String query = "SELECT id FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
+        String query = "SELECT pid FROM patient WHERE ip_addr='" + address.getHostAddress() + "';";
         //log.debug("Patient Id query: " + query);
         try {
             CachedRowSet rowset = this.executeQuery(query);
             
             if(rowset.last()){
-                result = rowset.getInt("id");
+                result = rowset.getInt("pid");
             } else {
                 result = -1;
             }

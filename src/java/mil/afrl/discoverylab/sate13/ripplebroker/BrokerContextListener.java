@@ -175,13 +175,13 @@ public class BrokerContextListener implements ServletContextListener {
         // Initalize database helper, context required only on first call to getInstance
         DatabaseHelper db = DatabaseHelper.getInstance(servletContext);
 
-//        String ipa = "aaaa:0000:0000:0000:0000:0000:1234:0001";
-//        String ipb = "aaaa:0000:0000:0000:0000:0000:5678:0001";
-//
-//        insertVitals(extractVitalsFromShimmerDataFile(insertTestPatient(ipa),
-//                                                      servletContext.getRealPath("/"),
-//                                                      "ShimmerData5"));
-//        insertTestPatient(ipb);
+        String ipa = "aaaa:0000:0000:0000:0000:0000:1234:0001";
+        String ipb = "aaaa:0000:0000:0000:0000:0000:5678:0001";
+
+        insertVitals(extractVitalsFromShimmerDataFile(insertTestPatient(ipa),
+                                                      servletContext.getRealPath("/"),
+                                                      "ShimmerData5"));
+        insertTestPatient(ipb);
     }
 
     private void insertVitals(ArrayList<Vital> vitalsList) {
@@ -207,7 +207,7 @@ public class BrokerContextListener implements ServletContextListener {
                 vList.add(new Vital(vid++,
                     pid,
                     new Date(),
-                    (int) (Double.parseDouble(splits[3]) * 1000.0),
+                    (int) (Double.parseDouble(splits[3])),
                     Integer.toString(Reference.SENSOR_TYPES.SENSOR_ECG.getValue()),
                     Integer.toString(Reference.VITAL_TYPES.VITAL_ECG.getValue()),
                     (int) (Double.parseDouble(splits[4]) * 10000000.0)));
