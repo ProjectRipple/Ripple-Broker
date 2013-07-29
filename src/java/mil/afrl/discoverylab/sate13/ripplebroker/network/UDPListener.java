@@ -80,8 +80,7 @@ public class UDPListener extends Observable implements Runnable {
                 // get sender info from socket address
                 InetSocketAddress sockAddr = ((InetSocketAddress) this.receivePacket.getSocketAddress());
                 // Print out info for debugging
-                log.debug("Message(" + this.receivePacket.getLength() + ") from " + sockAddr.getHostString() + " Port: " + sockAddr.getPort());
-                //log.debug("Message from " + sockAddr.getHostString() + " (" + sockAddr.getAddress().toString() + ") " + " Port:" + sockAddr.getPort());
+//                log.debug("Message(" + this.receivePacket.getLength() + ") from " + sockAddr.getHostString() + " Port: " + sockAddr.getPort());
                 //log.debug("Received (" + this.receivePacket.getLength() + ") " + new String(this.receivePacket.getData(), 0, this.receivePacket.getLength()));
 
                 // Set this object as having changed

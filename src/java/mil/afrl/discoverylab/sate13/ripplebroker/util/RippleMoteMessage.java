@@ -84,7 +84,7 @@ public class RippleMoteMessage {
         result.systemTime = obs.getReceiveTime();
 
         //log.debug("Overflow count: " + overflowCount);
-        log.debug("Timestamp: " + timestamp);
+//        log.debug("Timestamp: " + timestamp);
         
         // Get sensor type (1 byte unsigned)
         int type = (message[INDEX_SENSOR_TYPE] & 0xff);

@@ -72,7 +72,7 @@ public class MulticastSendListener implements Observer, Runnable {
             // join the group
             this.socket.joinGroup(new InetSocketAddress(this.group, MCAST_PORT), NetworkInterface.getByName(MCAST_INTERFACE));
 
-            log.debug("Network interface: " + this.socket.getNetworkInterface().getDisplayName());
+            log.debug("Network interface: " + NetworkInterface.getByName(MCAST_INTERFACE));
 
 
         } catch (UnknownHostException ex) {
@@ -143,6 +143,12 @@ public class MulticastSendListener implements Observer, Runnable {
                 break;
             case SENSOR_ECG:
                 // Don't set ecg this way
+                // Send dummy msg
+                Vital ecgVital = new Vital(patientId, msg.getSystemTime(), msg.getTimestamp(),
+                    msg.getSensorType().getValue() + "", VITAL_TYPES.VITAL_ECG.getValue() + "",
+                    ((RippleMoteMessage.ECGData) latestReading).adcReading);
+
+                vitals.add(this.gson.toJsonTree(ecgVital));
                 break;
             case SENSOR_TEMPERATURE:
                 // get Json objects for vitals
