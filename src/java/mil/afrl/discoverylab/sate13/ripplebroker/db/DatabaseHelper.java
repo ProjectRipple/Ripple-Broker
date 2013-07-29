@@ -303,7 +303,7 @@ public class DatabaseHelper {
         String query = "select vid, pid, server_timestamp, sensor_timestamp, sensor_type, value_type, value "
                        + "from vital v, "
                        + "(select max(sensor_timestamp) as mst from vital where pid = " + pid + ") m "
-                       + "where pid = " + pid + " AND vid >= " + vidi + " AND "
+                       + "where pid = " + pid + " AND sensor_timestamp > " + vidi + " AND "
                        + "(m.mst - v.sensor_timestamp) < " + timeLimit + " "
                        + "ORDER BY sensor_timestamp ASC";
         if (rowLimit > 0) {
