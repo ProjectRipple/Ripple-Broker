@@ -125,16 +125,19 @@ public class QueryServlet extends HttpServlet {
         String jstr = "";
         String pidstr = request.getParameter("pid");
         String vidistr = request.getParameter("vidi");
-        String limitstr = request.getParameter("limit");
+        String rlimstr = request.getParameter("rowlimit");
+        String tlimstr = request.getParameter("timelimit");
 
         try {
             Integer pid = Integer.parseInt(pidstr);
             Integer vidi = Integer.parseInt(vidistr);
-            Integer limit = Integer.parseInt(limitstr);
+            Integer rowLimit = Integer.parseInt(rlimstr);
+            Integer timeLimit = Integer.parseInt(tlimstr);
 
-            List<Vital> vList = dbh.getAllVitalsForPatient(pid,
-                                                           vidi,
-                                                           limit);
+            List<Vital> vList = dbh.getVitalsForPatient(pid,
+                                                        vidi,
+                                                        rowLimit,
+                                                        timeLimit);
 
             JsonArray vitals = (JsonArray) gson.toJsonTree(vList);
 
@@ -148,10 +151,8 @@ public class QueryServlet extends HttpServlet {
                 json.add("pid", gson.toJsonTree(pid, Integer.class));
                 jstr = json.toString();
             }
-        } catch (NumberFormatException nfe) {
-            jstr = "{\"Failure\": \"invalid pid: " + pidstr
-                   + ", vidi: " + vidistr + ", or limit: "
-                   + limitstr + " params\"}";
+        } catch (Exception e) {
+            jstr = "{\"failure\": \"" + e + "\"}";
         }
         return jstr;
     }
