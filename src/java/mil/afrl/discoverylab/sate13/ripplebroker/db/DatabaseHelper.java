@@ -291,33 +291,50 @@ public class DatabaseHelper {
         return pList;
     }
 
-    public List<Vital> getAllVitalsForPatient(Integer pid, Integer vidi, Integer limit) {
+    public List<Vital> getVitalsForPatient(Integer pid, Integer vidi, Integer rowLimit, Integer timeLimit) throws SQLException {
 
-        StringBuilder q = new StringBuilder("SELECT * FROM ");
-        q.append(Reference.TABLE_NAMES.VITAL.toString().toLowerCase());
-        q.append(" WHERE ");
-        q.append(Reference.VITAL_TABLE_COLUMNS.PID.name());
-        q.append(" = ");
-        q.append(pid);
-        q.append(" AND ");
-        q.append(Reference.VITAL_TABLE_COLUMNS.VID.name());
-        q.append(" >= ");
-        q.append(vidi);
-        q.append(" ORDER BY ");
-        q.append(Reference.VITAL_TABLE_COLUMNS.VID.name());
-        if (limit > 0) {
-            q.append(" LIMIT ");
-            q.append(limit);
+        /*
+         * select vid, pid, server_timestamp, sensor_timestamp, sensor_type, value_type, value 
+         * from vital v, 
+         * (select max(sensor_timestamp) as mst from vital) m 
+         * where (m.mst - v.sensor_timestamp) < 10000
+         */
+
+        String query = "select vid, pid, server_timestamp, sensor_timestamp, sensor_type, value_type, value "
+                       + "from vital v, "
+                       + "(select max(sensor_timestamp) as mst from vital) m "
+                       + "where pid = " + pid + " AND vid >= " + vidi + " AND "
+                       + "(m.mst - v.sensor_timestamp) < " + timeLimit + " "
+                       + "ORDER BY vid";
+        if (rowLimit > 0) {
+            query += " LIMIT " + rowLimit;
         }
 
+//        StringBuilder q = new StringBuilder("SELECT * FROM ");
+//        q.append(Reference.TABLE_NAMES.VITAL.toString().toLowerCase());
+//        q.append(" WHERE ");
+//        q.append(Reference.VITAL_TABLE_COLUMNS.PID.name());
+//        q.append(" = ");
+//        q.append(pid);
+//        q.append(" AND ");
+//        q.append(Reference.VITAL_TABLE_COLUMNS.VID.name());
+//        q.append(" >= ");
+//        q.append(vidi);
+//        q.append(" ORDER BY ");
+//        q.append(Reference.VITAL_TABLE_COLUMNS.VID.name());
+//        if (limit > 0) {
+//            q.append(" LIMIT ");
+//            q.append(limit);
+//        }
+//        query = q.toString();
+
         log.debug("Querying vitals for Patient: " + pid + ", vidi: " + vidi
-            + ", limit: " + limit);
+                  + ", rowlimit: " + rowLimit + ", timeLimit:" + timeLimit);
         ArrayList<Vital> vList = new ArrayList<Vital>();
-        try {
-            CachedRowSet rs = this.executeQuery(q.toString());
-            rs.first();
-            while (!rs.isAfterLast()) {
-                vList.add(new Vital(
+        CachedRowSet rs = this.executeQuery(query);
+        boolean hasRes = rs.first();
+        while (hasRes) {
+            vList.add(new Vital(
                     rs.getInt(VITAL_TABLE_COLUMNS.VID.name()),
                     rs.getInt(VITAL_TABLE_COLUMNS.PID.name()),
                     rs.getDate(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP.name()),
@@ -325,12 +342,9 @@ public class DatabaseHelper {
                     rs.getString(VITAL_TABLE_COLUMNS.SENSOR_TYPE.name()),
                     rs.getString(VITAL_TABLE_COLUMNS.VALUE_TYPE.name()),
                     rs.getInt(VITAL_TABLE_COLUMNS.VALUE.name())));
-                rs.next();
-            }
-            rs.close();
-        } catch (SQLException ex) {
-            log.error("Failed reading vitals table. ", ex);
+            hasRes = rs.next();
         }
+        rs.close();
         return vList;
     }
 
@@ -346,8 +360,8 @@ public class DatabaseHelper {
         //log.debug("Patient Id query: " + query);
         try {
             CachedRowSet rowset = this.executeQuery(query);
-            
-            if(rowset.last()){
+
+            if (rowset.last()) {
                 result = rowset.getInt("pid");
             } else {
                 result = -1;
