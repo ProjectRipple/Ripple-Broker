@@ -134,6 +134,48 @@ public class DatabaseHelper {
         }
         return result;
     }
+    
+    /**
+     * Same as executeQuery(String) but only allows select statements and uses own connection
+     * @param query
+     * @return
+     * @throws SQLException 
+     */
+    public CachedRowSet executeSelectQuery(String query) throws SQLException {
+        // CachedRowSet allows returning of results after original ResultSet is closed
+        CachedRowSet result = null;
+        if(!(query.trim().toUpperCase().startsWith("SELECT"))){
+            return result;
+        }
+        Connection lConnection = null;
+        Statement lStatement = null;
+        try {
+                lConnection = DriverManager.getConnection(this.connectionURI);
+                lStatement = lConnection.createStatement();
+                // Use rowset provider to remove JRE implementation dependence in code
+                result = RowSetProvider.newFactory().createCachedRowSet();
+                // populate row set with results
+                result.populate(lStatement.executeQuery(query));
+            
+        } finally {
+            try {
+                if (lStatement != null) {
+                    lStatement.close();
+                }
+            } catch (Exception e) {
+                // Do not allow exception to propagate
+            }
+
+            try {
+                if (lConnection != null) {
+                    lConnection.close();
+                }
+            } catch (Exception e) {
+                // Do not allow exception to propagate
+            }
+        }
+        return result;
+    }
 
     /**
      * Executes a SQL query for no result
@@ -269,7 +311,7 @@ public class DatabaseHelper {
 
         ArrayList<Patient> pList = new ArrayList<Patient>();
         try {
-            CachedRowSet rs = this.executeQuery(q.toString());
+            CachedRowSet rs = this.executeSelectQuery(q.toString());
             rs.first();
             while (!rs.isAfterLast()) {
                 pList.add(new Patient(
@@ -331,7 +373,8 @@ public class DatabaseHelper {
         log.debug("Querying vitals for Patient: " + pid + ", vidi: " + vidi
                   + ", rowlimit: " + rowLimit + ", timeLimit:" + timeLimit);
         ArrayList<Vital> vList = new ArrayList<Vital>();
-        CachedRowSet rs = this.executeQuery(query);
+        CachedRowSet rs = this.executeSelectQuery(query);
+        log.debug("Finished query");
         boolean hasRes = rs.first();
         while (hasRes) {
             vList.add(new Vital(
@@ -345,6 +388,7 @@ public class DatabaseHelper {
             hasRes = rs.next();
         }
         rs.close();
+        log.debug("Finished processing result set");
         return vList;
     }
 
