@@ -63,6 +63,11 @@ public final class Vital extends Model {
     }
 
     @Override
+    public Vital clone() {
+        return new Vital(vid, pid, (Date) server_timestamp.clone(), sensor_timestamp, sensor_type, value_type, value);
+    }
+
+    @Override
     public List<Map.Entry<Reference.TableColumns, String>> toListEntries() {
         List<Map.Entry<Reference.TableColumns, String>> entries = new ArrayList<Map.Entry<Reference.TableColumns, String>>();
         if (vid != null) {

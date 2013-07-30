@@ -472,7 +472,7 @@ public class DatabaseHelper {
     }
 
     public boolean bufferVital(Vital v) {
-        return vmb.addVital(v);
+        return vmb.addVital(v.clone());
     }
 
     public List<Vital> getBufferedVitalsForPatient(Integer pid, Integer vidi, Integer rowLimit, Integer timeLimit) {
