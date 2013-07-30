@@ -134,10 +134,15 @@ public class QueryServlet extends HttpServlet {
             Integer rowLimit = Integer.parseInt(rlimstr);
             Integer timeLimit = Integer.parseInt(tlimstr);
 
-            List<Vital> vList = dbh.getVitalsForPatient(pid,
-                                                        vidi,
-                                                        rowLimit,
-                                                        timeLimit);
+//            List<Vital> vList = dbh.getVitalsForPatient(pid,
+//                                                        vidi,
+//                                                        rowLimit,
+//                                                        timeLimit);
+
+            List<Vital> vList = dbh.getBufferedVitalsForPatient(pid,
+                                                                vidi,
+                                                                rowLimit,
+                                                                timeLimit);
 
             JsonArray vitals = (JsonArray) gson.toJsonTree(vList);
 

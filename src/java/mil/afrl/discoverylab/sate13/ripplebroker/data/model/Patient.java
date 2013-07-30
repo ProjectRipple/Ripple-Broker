@@ -23,6 +23,10 @@ public final class Patient extends Model {
     public Integer nbc_contamination;
     public String type;
 
+    public Patient(String ip_addr) {
+        this.ip_addr = ip_addr;
+    }
+
     public Patient(Integer pid, String ip_addr, String first_name, String last_name, String ssn, Date dob, String sex, Integer nbc_contamination, String type) {
         this.pid = pid;
         this.ip_addr = ip_addr;
@@ -49,18 +53,33 @@ public final class Patient extends Model {
     @Override
     public List<Map.Entry<Reference.TableColumns, String>> toListEntries() {
         List<Map.Entry<Reference.TableColumns, String>> entries = new ArrayList<Map.Entry<Reference.TableColumns, String>>();
-
         if (pid != null) {
             addEntry(entries, PATIENT_TABLE_COLUMNS.PID, Integer.toString(pid));
         }
-        addEntry(entries, PATIENT_TABLE_COLUMNS.FIRST_NAME, first_name);
-        addEntry(entries, PATIENT_TABLE_COLUMNS.LAST_NAME, last_name);
-        addEntry(entries, PATIENT_TABLE_COLUMNS.SSN, ssn);
-        addEntry(entries, PATIENT_TABLE_COLUMNS.DOB, Reference.datetimeFormat.format(dob));
-        addEntry(entries, PATIENT_TABLE_COLUMNS.SEX, sex);
-        addEntry(entries, PATIENT_TABLE_COLUMNS.NBC_CONTAMINATION, Integer.toString(nbc_contamination));
-        addEntry(entries, PATIENT_TABLE_COLUMNS.TYPE, type);
-
+        if (ip_addr != null) {
+            addEntry(entries, PATIENT_TABLE_COLUMNS.IP_ADDR, ip_addr);
+        }
+        if (first_name != null) {
+            addEntry(entries, PATIENT_TABLE_COLUMNS.FIRST_NAME, first_name);
+        }
+        if (last_name != null) {
+            addEntry(entries, PATIENT_TABLE_COLUMNS.LAST_NAME, last_name);
+        }
+        if (first_name != null) {
+            addEntry(entries, PATIENT_TABLE_COLUMNS.SSN, ssn);
+        }
+        if (dob != null) {
+            addEntry(entries, PATIENT_TABLE_COLUMNS.DOB, Reference.datetimeFormat.format(dob));
+        }
+        if (sex != null) {
+            addEntry(entries, PATIENT_TABLE_COLUMNS.SEX, sex);
+        }
+        if (nbc_contamination != null) {
+            addEntry(entries, PATIENT_TABLE_COLUMNS.NBC_CONTAMINATION, Integer.toString(nbc_contamination));
+        }
+        if (type != null) {
+            addEntry(entries, PATIENT_TABLE_COLUMNS.TYPE, type);
+        }
         return entries;
     }
 

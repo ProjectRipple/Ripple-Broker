@@ -1,17 +1,17 @@
 package mil.afrl.discoverylab.sate13.ripplebroker.db;
 
-import java.util.AbstractMap.SimpleEntry;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Observer;
+import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Patient;
+import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.network.UDPListenerObservation;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
-import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.PATIENT_TABLE_COLUMNS;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITAL_TABLE_COLUMNS;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITAL_TYPES;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.RippleMoteMessage;
@@ -35,9 +35,7 @@ public class DatabaseMessageListener implements Observer {
     private final Logger log = Logger.getLogger(Config.LOGGER_NAME);
 
     public DatabaseMessageListener() {
-
         this.databaseHelper = DatabaseHelper.getInstance(null);
-
     }
 
     @Override
@@ -49,7 +47,7 @@ public class DatabaseMessageListener implements Observer {
             UDPListenerObservation obs = (UDPListenerObservation) arg;
             // attempt parse of observation data
             msg = RippleMoteMessage.parse(obs);
-        } else if(arg instanceof RippleMoteMessage) {
+        } else if (arg instanceof RippleMoteMessage) {
             msg = (RippleMoteMessage) arg;
         } else {
             log.debug("Unknown object observed: " + arg.getClass().getName());
@@ -58,29 +56,41 @@ public class DatabaseMessageListener implements Observer {
 
         if (msg != null) {
 
-            List<Entry<Reference.TableColumns, String>> dataCols = new ArrayList<Entry<Reference.TableColumns, String>>();
+            //List<Entry<Reference.TableColumns, String>> dataCols = new ArrayList<Entry<Reference.TableColumns, String>>();
+
             // verify that patient exists
-            if (!this.databaseHelper.patientExists(msg.getSenderAddress().getAddress())) {
+            InetSocketAddress srcAddr = msg.getSenderAddress();
+            if (!databaseHelper.patientExists(srcAddr.getAddress())) {
                 // insert patient into database
-                dataCols.add((new SimpleEntry<Reference.TableColumns, String>(PATIENT_TABLE_COLUMNS.IP_ADDR, msg.getSenderAddress().getAddress().getHostAddress())));
-                this.databaseHelper.insertRow(Reference.TABLE_NAMES.PATIENT, dataCols);
-                dataCols.clear();
+                Patient p = new Patient(srcAddr.getAddress().getHostAddress());
+                databaseHelper.insertRow(Reference.TABLE_NAMES.PATIENT, p.toListEntries());
+
+                //dataCols.add((new SimpleEntry<Reference.TableColumns, String>(PATIENT_TABLE_COLUMNS.IP_ADDR, srcAddr.getAddress().getHostAddress())));
+                //databaseHelper.insertRow(Reference.TABLE_NAMES.PATIENT, dataCols);
+                //dataCols.clear();
             }
             // get their id
             // TODO: just use getPatientId as an exists method? (<0 = not exists?)
-            int patientId = this.databaseHelper.getPatientId(msg.getSenderAddress().getAddress());
+            Vital v = new Vital();
+            v.pid = this.databaseHelper.getPatientId(srcAddr.getAddress());
+            v.server_timestamp = msg.getSystemTime();
+            v.sensor_timestamp = msg.getTimestamp();
+            v.sensor_type = "" + msg.getSensorType().getValue();
+
+            databaseHelper.bufferPatient(v.pid);
+
             // initalize columns in list
-            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.PID, "" + patientId));
-            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, Reference.datetimeFormat.format(msg.getSystemTime())));
-            dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TYPE, "" + msg.getSensorType().getValue()));
+            //dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.PID, "" + v.pid));
+            //dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, Reference.datetimeFormat.format(v.server_timestamp)));
+            //dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TYPE, v.sensor_type));
             // save reference to these columns as they will change during below loop
-            Entry<Reference.TableColumns, String> sensorTimestampEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + msg.getTimestamp());
-            Entry<Reference.TableColumns, String> valueEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.VALUE, "");
-            Entry<Reference.TableColumns, String> valueTypeEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.VALUE_TYPE, "");
-            
-            dataCols.add(sensorTimestampEntry);
-            dataCols.add(valueEntry);
-            dataCols.add(valueTypeEntry);
+            //Entry<Reference.TableColumns, String> sensorTimestampEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + v.sensor_timestamp);
+            //Entry<Reference.TableColumns, String> valueEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.VALUE, "");
+            //Entry<Reference.TableColumns, String> valueTypeEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.VALUE_TYPE, "");
+
+            //dataCols.add(sensorTimestampEntry);
+            //dataCols.add(valueEntry);
+            //dataCols.add(valueTypeEntry);
 
             List<RippleData> data = msg.getData();
 
@@ -88,32 +98,42 @@ public class DatabaseMessageListener implements Observer {
             switch (msg.getSensorType()) {
                 case SENSOR_PULSE_OX:
                     for (RippleData value : data) {
-                        
+
                         // Set timestamp for samples
-                        sensorTimestampEntry.setValue("" + ((PulseOxData) value).sampleTime);
-                        
-                        valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_PULSE.getValue());
-                        valueEntry.setValue("" + ((PulseOxData) value).pulse);
-                        
-                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
+                        v.sensor_timestamp = ((PulseOxData) value).sampleTime;
+                        //sensorTimestampEntry.setValue("" + ((PulseOxData) value).sampleTime);
 
-                        valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_BLOOD_OX.getValue());
-                        valueEntry.setValue("" + ((PulseOxData) value).bloodOxygen);
+                        v.value_type = "" + VITAL_TYPES.VITAL_PULSE.getValue();
+                        //valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_PULSE.getValue());
+                        v.value = ((PulseOxData) value).pulse;
+                        //valueEntry.setValue("" + ((PulseOxData) value).pulse);
 
-                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
+                        databaseHelper.bufferVital(v);
+                        databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
 
+                        v.value_type = "" + VITAL_TYPES.VITAL_BLOOD_OX.getValue();
+                        //valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_BLOOD_OX.getValue());
+                        v.value = ((PulseOxData) value).bloodOxygen;
+                        //valueEntry.setValue("" + ((PulseOxData) value).bloodOxygen);
+
+                        databaseHelper.bufferVital(v);
+                        databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
                     }
                     break;
                 case SENSOR_ECG:
 //                    valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_ECG.getValue());
-                    List<Map<Reference.TableColumns, String>> rows = new ArrayList<Map<Reference.TableColumns,String>>();
+                    List<Map<Reference.TableColumns, String>> rows = new ArrayList<Map<Reference.TableColumns, String>>();
                     Map<Reference.TableColumns, String> curRow;
                     List<Reference.TableColumns> columns = new ArrayList<Reference.TableColumns>();
+
                     // Initialize some strings that are the same for all rows
-                    String pid = "" + patientId;
-                    String serverTime = Reference.datetimeFormat.format(msg.getSystemTime());
-                    String sensorType = "" + msg.getSensorType().getValue();
-                    String ecgValueType = "" + VITAL_TYPES.VITAL_ECG.getValue();
+                    v.server_timestamp = msg.getSystemTime();
+                    v.sensor_type = "" + msg.getSensorType().getValue();
+                    v.value_type = "" + VITAL_TYPES.VITAL_ECG.getValue();
+
+                    String pid = "" + v.pid;
+                    String serverTime = Reference.datetimeFormat.format(v.server_timestamp);
+
                     // Add columns to list
                     columns.add(VITAL_TABLE_COLUMNS.PID);
                     columns.add(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP);
@@ -121,8 +141,13 @@ public class DatabaseMessageListener implements Observer {
                     columns.add(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP);
                     columns.add(VITAL_TABLE_COLUMNS.VALUE);
                     columns.add(VITAL_TABLE_COLUMNS.VALUE_TYPE);
+
                     // input entries
                     for (RippleData value : data) {
+                        v.sensor_timestamp = ((ECGData) value).sampleTime;
+                        v.value = ((ECGData) value).adcReading;
+                        databaseHelper.bufferVital(v);
+
                         // TODO: convert ADC value to mV? Where?
                         //valueEntry.setValue("" + ((ECGData) value).adcReading);
                         //sensorTimestampEntry.setValue("" + ((ECGData) value).sampleTime);
@@ -130,27 +155,31 @@ public class DatabaseMessageListener implements Observer {
                         curRow = new HashMap<Reference.TableColumns, String>();
                         curRow.put(VITAL_TABLE_COLUMNS.PID, pid);
                         curRow.put(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, serverTime);
-                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TYPE, sensorType);
-                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + ((ECGData) value).sampleTime);
-                        curRow.put(VITAL_TABLE_COLUMNS.VALUE, "" + ((ECGData) value).adcReading);
-                        curRow.put(VITAL_TABLE_COLUMNS.VALUE_TYPE, ecgValueType);
+                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TYPE, v.sensor_type);
+                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + v.sensor_timestamp);
+                        curRow.put(VITAL_TABLE_COLUMNS.VALUE, "" + v.value);
+                        curRow.put(VITAL_TABLE_COLUMNS.VALUE_TYPE, v.value_type);
                         rows.add(curRow);
                     }
                     this.databaseHelper.bulkInsert(Reference.TABLE_NAMES.VITAL, columns, rows);
                     break;
                 case SENSOR_TEMPERATURE:
-                    valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_TEMPERATURE.getValue());
+                    v.value_type = "" + VITAL_TYPES.VITAL_TEMPERATURE.getValue();
+                    //valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_TEMPERATURE.getValue());
                     for (RippleData value : data) {
-                        valueEntry.setValue("" + ((TemperatureData) value).temperature);
-                        sensorTimestampEntry.setValue("" + ((TemperatureData) value).sampleTime);
-                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
+                        v.value = ((TemperatureData) value).temperature;
+                        //valueEntry.setValue("" + ((TemperatureData) value).temperature);
+                        v.sensor_timestamp = ((TemperatureData) value).sampleTime;
+                        //sensorTimestampEntry.setValue("" + ((TemperatureData) value).sampleTime);
+                        databaseHelper.bufferVital(v);
+                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
                     }
                     break;
                 default:
                     throw new AssertionError(msg.getSensorType().name());
             }
         }
-        
+
 //        log.debug("DatabaseMessage update finished");
     }
 }

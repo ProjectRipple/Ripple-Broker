@@ -8,6 +8,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,9 +45,11 @@ public class DatabaseHelper {
     private Statement statement = null;
     private ResultSet resultSet = null;
     // logger
-    private Logger log = Logger.getLogger(Config.LOGGER_NAME);
+    private static Logger log = Logger.getLogger(Config.LOGGER_NAME);
     // lock object
     private final Object lock = new Object();
+    // Buffer
+    private static VitalsMapBuffer vmb = new VitalsMapBuffer();
 
     /**
      * Get current instance of database helper
@@ -134,29 +138,31 @@ public class DatabaseHelper {
         }
         return result;
     }
-    
+
     /**
-     * Same as executeQuery(String) but only allows select statements and uses own connection
+     * Same as executeQuery(String) but only allows select statements and uses
+     * own connection
+     *
      * @param query
      * @return
-     * @throws SQLException 
+     * @throws SQLException
      */
     public CachedRowSet executeSelectQuery(String query) throws SQLException {
         // CachedRowSet allows returning of results after original ResultSet is closed
         CachedRowSet result = null;
-        if(!(query.trim().toUpperCase().startsWith("SELECT"))){
+        if (!(query.trim().toUpperCase().startsWith("SELECT"))) {
             return result;
         }
         Connection lConnection = null;
         Statement lStatement = null;
         try {
-                lConnection = DriverManager.getConnection(this.connectionURI);
-                lStatement = lConnection.createStatement();
-                // Use rowset provider to remove JRE implementation dependence in code
-                result = RowSetProvider.newFactory().createCachedRowSet();
-                // populate row set with results
-                result.populate(lStatement.executeQuery(query));
-            
+            lConnection = DriverManager.getConnection(this.connectionURI);
+            lStatement = lConnection.createStatement();
+            // Use rowset provider to remove JRE implementation dependence in code
+            result = RowSetProvider.newFactory().createCachedRowSet();
+            // populate row set with results
+            result.populate(lStatement.executeQuery(query));
+
         } finally {
             try {
                 if (lStatement != null) {
@@ -456,5 +462,70 @@ public class DatabaseHelper {
     public void cleanUp() {
         this.closeDatabase();
         instance = null;
+    }
+
+    /**
+     * Buffering Related methods and class
+     */
+    public boolean bufferPatient(Integer pid) {
+        return vmb.addPatient(pid);
+    }
+
+    public boolean bufferVital(Vital v) {
+        return vmb.addVital(v);
+    }
+
+    public List<Vital> getBufferedVitalsForPatient(Integer pid, Integer vidi, Integer rowLimit, Integer timeLimit) {
+        return vmb.getVitalsAfterTime(pid, vidi);
+    }
+
+    private static class VitalsMapBuffer {
+
+        private final Integer ENTRY_CAPACITY = 100;
+        private final Integer ENTRY_CAPACITY_FRACTION = 50;
+        private HashMap<Integer, ArrayList<Vital>> buffer;
+
+        public VitalsMapBuffer() {
+            buffer = new HashMap<Integer, ArrayList<Vital>>();
+        }
+
+        public synchronized boolean addPatient(Integer pid) {
+            if (!buffer.containsKey(pid)) {
+                buffer.put(pid, new ArrayList<Vital>(ENTRY_CAPACITY));
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        private synchronized boolean addVital(Vital v) {
+            ArrayList<Vital> vitals = buffer.get(v.pid);
+            if (vitals.size() > ENTRY_CAPACITY) {
+                vitals.remove(0);
+            }
+            return vitals.add(v);
+        }
+
+        private List<Vital> getVitalsAfterTime(Integer pid, Integer vidi) {
+            ArrayList<Vital> bufferedVitals = buffer.get(pid);
+            ArrayList<Vital> newVitals = new ArrayList<Vital>(ENTRY_CAPACITY_FRACTION);
+            if (bufferedVitals != null) {
+                Collections.sort(bufferedVitals, new Vital.VitalComparator());
+                Long tf = 0L;
+                for (Vital v : bufferedVitals) {
+                    if (v != null && v.sensor_timestamp > vidi) {
+                        newVitals.add(v);
+                    }
+                }
+                int numVitals = newVitals.size();
+                if (numVitals > 0) {
+                    tf = newVitals.get(numVitals - 1).sensor_timestamp;
+                }
+                log.debug("Found " + newVitals.size() + " out of " + bufferedVitals.size()
+                          + " buffered vitals after time " + vidi
+                          + " with a min difference of " + (tf - vidi) + ".");
+            }
+            return newVitals;
+        }
     }
 }
