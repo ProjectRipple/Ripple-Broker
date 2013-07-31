@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Patient;
 import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
@@ -28,7 +27,7 @@ import org.apache.log4j.Logger;
 public class UDPPatientVitalStreamer {
 
     // Map of patients to subscriber lists
-    private Map<Patient, List<InetSocketAddress>> subscriberMap = new HashMap<Patient, List<InetSocketAddress>>();
+    private Map<Integer, List<InetSocketAddress>> subscriberMap = new HashMap<Integer, List<InetSocketAddress>>();
     // Socket
     private DatagramSocket socket = null;
     // Timer for sending data
@@ -44,11 +43,11 @@ public class UDPPatientVitalStreamer {
     // reference to instance
     private static final UDPPatientVitalStreamer instance = new UDPPatientVitalStreamer();
 
-    private void UDPStreamer() {
+    private UDPPatientVitalStreamer() {
     }
 
     // underlying private methods for public interface
-    private void addSubscriberP(Patient patient, InetSocketAddress subscriber) {
+    private void addSubscriberP(Integer patient, InetSocketAddress subscriber) {
         synchronized (this.mapLock) {
             // Add patient if not in table
             if (!this.subscriberMap.containsKey(patient)) {
@@ -58,7 +57,7 @@ public class UDPPatientVitalStreamer {
         }
     }
 
-    private void removeSubscriberP(Patient patient, InetSocketAddress subscriber) {
+    private void removeSubscriberP(Integer patient, InetSocketAddress subscriber) {
         synchronized (this.mapLock) {
             if (this.subscriberMap.containsKey(patient)) {
                 this.subscriberMap.get(patient).remove(subscriber);
@@ -99,20 +98,20 @@ public class UDPPatientVitalStreamer {
     /**
      * Add subscriber to patient's feed
      *
-     * @param patient Patient to subscribe to
+     * @param patient Integer to subscribe to
      * @param subscriber Subscriber to add
      */
-    public static void addSubscriber(Patient patient, InetSocketAddress subscriber) {
+    public static void addSubscriber(Integer patient, InetSocketAddress subscriber) {
         instance.addSubscriberP(patient, subscriber);
     }
 
     /**
      * Remove subscriber from patient's feed
      *
-     * @param patient Patient to unsubscribe from
+     * @param patient Integer to unsubscribe from
      * @param subscriber Subscriber to remove
      */
-    public static void removeSubscriber(Patient patient, InetSocketAddress subscriber) {
+    public static void removeSubscriber(Integer patient, InetSocketAddress subscriber) {
         instance.removeSubscriberP(patient, subscriber);
     }
 
@@ -147,13 +146,13 @@ public class UDPPatientVitalStreamer {
                 oos = new ObjectOutputStream(baos);
                 byte[] vitalsByteArray = null;
                 // Iterate through current patients
-                for (Patient p : subscriberMap.keySet()) {
+                for (Integer p : subscriberMap.keySet()) {
                     // get subs for this patient
                     subs = subscriberMap.get(p);
                     // check that there is atleast 1 sub
                     if (!subs.isEmpty()) {
                         // get vitals for patient
-                        vitals = dbhelper.getBufferedVitalsForPatient(p.pid, 0, 101, 0);
+                        vitals = dbhelper.getBufferedVitalsForPatient(p, 0, 100, 0);
                         // serialize object
                         oos.writeObject(vitals);
                         oos.flush();

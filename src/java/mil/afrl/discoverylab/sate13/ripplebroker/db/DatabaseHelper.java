@@ -500,7 +500,7 @@ public class DatabaseHelper {
 
         private synchronized boolean addVital(Vital v) {
             ArrayList<Vital> vitals = buffer.get(v.pid);
-            if (vitals.size() > ENTRY_CAPACITY) {
+            if (vitals.size() >= ENTRY_CAPACITY) {
                 vitals.remove(0);
             }
             return vitals.add(v);

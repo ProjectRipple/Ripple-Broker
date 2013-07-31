@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
+import mil.afrl.discoverylab.sate13.ripplebroker.network.UDPPatientVitalStreamer;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.PATIENT_TABLE_COLUMNS;
@@ -74,6 +76,9 @@ public class QueryServlet extends HttpServlet {
                 break;
             case VITAL:
                 restr = this.processVitalQueryRequest(request);
+                break;
+            case SUBSCRIPTION:
+                restr = this.processSubscriptionQuery(request);
                 break;
             default:
                 restr = "{\"Failure\": \"invalid query type\"}";
@@ -160,6 +165,48 @@ public class QueryServlet extends HttpServlet {
             jstr = "{\"failure\": \"" + e + "\"}";
         }
         return jstr;
+    }
+
+    private String processSubscriptionQuery(HttpServletRequest request)
+            throws ServletException, IOException {
+
+        boolean res = true;
+
+        Integer pid = -1;
+        Integer port = -1;
+
+        String pidstr = request.getParameter("pid");
+        String actionstr = request.getParameter("action");
+        String portstr = request.getParameter("port");
+        String ex = "";
+
+        JsonObject json = new JsonObject();
+
+        try {
+            pid = Integer.parseInt(pidstr);
+            port = Integer.parseInt(portstr);
+
+
+            InetAddress addr = InetAddress.getByName(request.getRemoteAddr());
+            InetSocketAddress sockAddr = new InetSocketAddress(addr, port);
+
+            if (actionstr.equals("subscribe")) {
+                UDPPatientVitalStreamer.addSubscriber(pid, sockAddr);
+            } else if (actionstr.equals("unsubscribe")) {
+                UDPPatientVitalStreamer.removeSubscriber(pid, sockAddr);
+            }
+        } catch (Exception e) {
+            ex = e.getMessage();
+            res = false;
+        }
+
+        json.addProperty("success", res);
+        json.addProperty("exception", ex);
+        json.addProperty("pid_echo", pid);
+        json.addProperty("action_echo", actionstr);
+        json.addProperty("port_echo", port);
+
+        return json.toString();
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
