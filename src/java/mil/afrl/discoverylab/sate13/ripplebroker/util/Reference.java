@@ -9,7 +9,7 @@ import java.text.SimpleDateFormat;
 public class Reference {
 
     public enum QUERY_TYPES {
-        PATIENT, VITAL;
+        PATIENT, VITAL, SUBSCRIPTION;
     }
     
     //Sensor constants
