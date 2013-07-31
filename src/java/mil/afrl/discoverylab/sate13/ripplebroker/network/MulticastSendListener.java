@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.logging.Level;
-import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
+import mil.afrl.discoverylab.sate13.ripple.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;

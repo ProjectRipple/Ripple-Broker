@@ -1,4 +1,4 @@
-package mil.afrl.discoverylab.sate13.ripplebroker.data.model;
+package mil.afrl.discoverylab.sate13.ripple.data.model;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -10,7 +10,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import static mil.afrl.discoverylab.sate13.ripplebroker.data.model.Model.addEntry;
+import static mil.afrl.discoverylab.sate13.ripple.data.model.Model.addEntry;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.TableColumns;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITAL_TABLE_COLUMNS;

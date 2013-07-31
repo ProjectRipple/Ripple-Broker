@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
+import mil.afrl.discoverylab.sate13.ripple.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import org.apache.log4j.Logger;
@@ -141,7 +141,7 @@ public class UDPPatientVitalStreamer {
                 // Initialize local variables
                 List<Vital> vitals = null;
                 List<InetSocketAddress> subs = null;
-                DatagramPacket sendPacket = new DatagramPacket(null, 0);
+                DatagramPacket sendPacket = new DatagramPacket(new byte[1], 1);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 oos = new ObjectOutputStream(baos);
                 byte[] vitalsByteArray = null;

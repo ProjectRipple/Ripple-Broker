@@ -1,4 +1,4 @@
-package mil.afrl.discoverylab.sate13.ripplebroker.data.model;
+package mil.afrl.discoverylab.sate13.ripple.data.model;
 
 import java.util.ArrayList;
 import java.util.Date;

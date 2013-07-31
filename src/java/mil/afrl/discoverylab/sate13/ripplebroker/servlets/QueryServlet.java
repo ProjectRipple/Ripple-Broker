@@ -17,7 +17,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
+import mil.afrl.discoverylab.sate13.ripple.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.network.UDPPatientVitalStreamer;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;

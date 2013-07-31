@@ -17,10 +17,11 @@ import java.util.concurrent.Executors;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import mil.afrl.discoverylab.sate13.ripplebroker.data.model.Vital;
+import mil.afrl.discoverylab.sate13.ripple.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseMessageListener;
 import mil.afrl.discoverylab.sate13.ripplebroker.network.MulticastSendListener;
+import mil.afrl.discoverylab.sate13.ripplebroker.network.UDPPatientVitalStreamer;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.UDPToRippleListener;
@@ -78,8 +79,10 @@ public class BrokerContextListener implements ServletContextListener {
         }
         // Start listen server
         executor.submit(task);
-
+        
         executor.submit(this.multicastTask);
+        // start udp streamer
+        UDPPatientVitalStreamer.start();
 
         log.debug("Context Initialized");
 
@@ -163,6 +166,8 @@ public class BrokerContextListener implements ServletContextListener {
         this.multicastTask.stop();
         // Stop execution service tasks
         executor.shutdown();
+        // stop streaming patient vitals
+        UDPPatientVitalStreamer.stop();
         log.debug("Context destroyed");
     }
 
