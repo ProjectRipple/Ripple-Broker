@@ -1,5 +1,9 @@
 package mil.afrl.discoverylab.sate13.ripplebroker.data.model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -15,8 +19,10 @@ import mil.afrl.discoverylab.sate13.ripplebroker.util.Reference.VITAL_TABLE_COLU
  *
  * @author burt
  */
-public final class Vital extends Model {
+public final class Vital extends Model implements Serializable {
 
+    private static final long serialVersionUID = 512L;
+    
     public Integer vid;
     public Integer pid;
     public Date server_timestamp;
@@ -118,6 +124,14 @@ public final class Vital extends Model {
         } catch (ParseException ex) {
         } catch (Exception e) {
         }
+    }
+
+    public void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+    }
+
+    public void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
     }
 
     public static class VitalComparator implements Comparator<Vital> {
