@@ -1,18 +1,29 @@
 package mil.afrl.discoverylab.sate13.ripplebroker.db;
 
 import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
 import javax.servlet.ServletContext;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetProvider;
@@ -92,6 +103,12 @@ public class DatabaseHelper {
 
         // Make sure tables exist
         this.createTables();
+        
+//        int[] test = selectVitalBlobTest(2,1,1);
+//        for(int i: test){
+//            System.out.println("Value: " + i);
+//        }
+        
 
     }
 
@@ -105,6 +122,8 @@ public class DatabaseHelper {
                 this.statement = this.connection.createStatement();
                 this.statement.execute(Reference.PATIENT_TABLE_CREATE);
                 this.statement.execute(Reference.VITAL_TABLE_CREATE);
+                System.out.println(Reference.VITAL_BLOB_TABLE_CREATE);
+                this.statement.execute(Reference.VITAL_BLOB_TABLE_CREATE);
             }
         } catch (SQLException ex) {
             log.error("Problem creating database tables.", ex);
@@ -288,6 +307,98 @@ public class DatabaseHelper {
 
     }
 
+    public void insertVitalBlob(int pid, Date serverTime, long sensorTime, int sensorType, int valueType, int period, int[] values) {
+        
+        Connection conn = null;
+        PreparedStatement pStatement = null;
+        try {
+            // Get connection and statement
+            conn = DriverManager.getConnection(this.connectionURI);
+            pStatement =
+                conn.prepareStatement("INSERT INTO vital_blob(pid, server_timestamp, sensor_timestamp, sensor_type, value_type, num_samples, period_ms, value) VALUES(?,?,?,?,?,?,?,?);");
+            // Insert values into statement
+            pStatement.setInt(1, pid);
+            pStatement.setTimestamp(2, new Timestamp(serverTime.getTime()));
+            pStatement.setLong(3, sensorTime);
+            pStatement.setInt(4, sensorType);
+            pStatement.setInt(5, valueType);
+            pStatement.setInt(6, values.length);
+            pStatement.setInt(7, period);
+            // Convert values into a byte array input stream and set a a blob
+            ByteBuffer byteBuffer = ByteBuffer.allocate(values.length * 4);
+            IntBuffer intBuffer = byteBuffer.asIntBuffer();
+            intBuffer.put(values);
+            pStatement.setBlob(8, new ByteArrayInputStream(byteBuffer.array()), values.length * 4);
+            // execute statement
+            pStatement.execute();
+
+        } catch (SQLException ex) {
+            log.error(DatabaseHelper.class.getName() + ":Error inserting blob", ex);
+        } finally {
+            try {
+                if (pStatement != null) {
+                    pStatement.close();
+                }
+            } catch (Exception e) {
+                // Do not allow exception to propagate
+            }
+
+            try {
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (Exception e) {
+                // Do not allow exception to propagate
+            }
+        }
+    }
+    
+    public int[] selectVitalBlobTest(int pid, int sensorType, int valueType) {
+        int[] result = null;
+        Connection conn = null;
+        PreparedStatement pStatement = null;
+        try {
+            // Get connection and statement
+            conn = DriverManager.getConnection(this.connectionURI);
+            pStatement =
+                conn.prepareStatement("SELECT num_samples, value FROM vital_blob WHERE pid=? AND sensor_type=? AND value_type=? ;");
+            // Insert values into statement
+            pStatement.setInt(1, pid);
+            pStatement.setInt(2, sensorType);
+            pStatement.setInt(3, valueType);
+            // execute statement
+            ResultSet rs = pStatement.executeQuery();
+            if(rs.first()){
+                byte[] bArray = new byte[rs.getInt("num_samples")];
+                rs.getBinaryStream("value").read(bArray);
+                result = ByteBuffer.wrap(bArray).order(ByteOrder.BIG_ENDIAN).asIntBuffer().array();
+                
+            }
+
+        } catch (SQLException ex) {
+            log.error(DatabaseHelper.class.getName() + ":Error inserting blob", ex);
+        } catch (IOException ex) {
+            log.error(DatabaseHelper.class.getName() + ":Error reading stream", ex);
+        } finally {
+            try {
+                if (pStatement != null) {
+                    pStatement.close();
+                }
+            } catch (Exception e) {
+                // Do not allow exception to propagate
+            }
+
+            try {
+                if (conn != null) {
+                    conn.close();
+                }
+            } catch (Exception e) {
+                // Do not allow exception to propagate
+            }
+        }
+        return result;
+    }
+
     /**
      * Check if patient exists based on IP address
      *
@@ -321,15 +432,15 @@ public class DatabaseHelper {
             rs.first();
             while (!rs.isAfterLast()) {
                 pList.add(new Patient(
-                        rs.getInt(PATIENT_TABLE_COLUMNS.PID.name()),
-                        rs.getString(PATIENT_TABLE_COLUMNS.IP_ADDR.name()),
-                        rs.getString(PATIENT_TABLE_COLUMNS.FIRST_NAME.name()),
-                        rs.getString(PATIENT_TABLE_COLUMNS.LAST_NAME.name()),
-                        rs.getString(PATIENT_TABLE_COLUMNS.SSN.name()),
-                        rs.getDate(PATIENT_TABLE_COLUMNS.DOB.name()),
-                        rs.getString(PATIENT_TABLE_COLUMNS.SEX.name()),
-                        rs.getInt(PATIENT_TABLE_COLUMNS.NBC_CONTAMINATION.name()),
-                        rs.getString(PATIENT_TABLE_COLUMNS.TYPE.name())));
+                    rs.getInt(PATIENT_TABLE_COLUMNS.PID.name()),
+                    rs.getString(PATIENT_TABLE_COLUMNS.IP_ADDR.name()),
+                    rs.getString(PATIENT_TABLE_COLUMNS.FIRST_NAME.name()),
+                    rs.getString(PATIENT_TABLE_COLUMNS.LAST_NAME.name()),
+                    rs.getString(PATIENT_TABLE_COLUMNS.SSN.name()),
+                    rs.getDate(PATIENT_TABLE_COLUMNS.DOB.name()),
+                    rs.getString(PATIENT_TABLE_COLUMNS.SEX.name()),
+                    rs.getInt(PATIENT_TABLE_COLUMNS.NBC_CONTAMINATION.name()),
+                    rs.getString(PATIENT_TABLE_COLUMNS.TYPE.name())));
                 rs.next();
             }
             rs.close();
@@ -349,11 +460,11 @@ public class DatabaseHelper {
          */
 
         String query = "select vid, pid, server_timestamp, sensor_timestamp, sensor_type, value_type, value "
-                       + "from vital v, "
-                       + "(select max(sensor_timestamp) as mst from vital where pid = " + pid + ") m "
-                       + "where pid = " + pid + " AND sensor_timestamp > " + vidi + " AND "
-                       + "(m.mst - v.sensor_timestamp) < " + timeLimit + " "
-                       + "ORDER BY sensor_timestamp ASC";
+            + "from vital v, "
+            + "(select max(sensor_timestamp) as mst from vital where pid = " + pid + ") m "
+            + "where pid = " + pid + " AND sensor_timestamp > " + vidi + " AND "
+            + "(m.mst - v.sensor_timestamp) < " + timeLimit + " "
+            + "ORDER BY sensor_timestamp ASC";
         if (rowLimit > 0) {
             query += " LIMIT " + rowLimit;
         }
@@ -377,20 +488,20 @@ public class DatabaseHelper {
 //        query = q.toString();
 
         log.debug("Querying vitals for Patient: " + pid + ", vidi: " + vidi
-                  + ", rowlimit: " + rowLimit + ", timeLimit:" + timeLimit);
+            + ", rowlimit: " + rowLimit + ", timeLimit:" + timeLimit);
         ArrayList<Vital> vList = new ArrayList<Vital>();
         CachedRowSet rs = this.executeSelectQuery(query);
         log.debug("Finished query");
         boolean hasRes = rs.first();
         while (hasRes) {
             vList.add(new Vital(
-                    rs.getInt(VITAL_TABLE_COLUMNS.VID.name()),
-                    rs.getInt(VITAL_TABLE_COLUMNS.PID.name()),
-                    rs.getDate(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP.name()),
-                    rs.getLong(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP.name()),
-                    rs.getString(VITAL_TABLE_COLUMNS.SENSOR_TYPE.name()),
-                    rs.getString(VITAL_TABLE_COLUMNS.VALUE_TYPE.name()),
-                    rs.getInt(VITAL_TABLE_COLUMNS.VALUE.name())));
+                rs.getInt(VITAL_TABLE_COLUMNS.VID.name()),
+                rs.getInt(VITAL_TABLE_COLUMNS.PID.name()),
+                rs.getDate(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP.name()),
+                rs.getLong(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP.name()),
+                rs.getString(VITAL_TABLE_COLUMNS.SENSOR_TYPE.name()),
+                rs.getString(VITAL_TABLE_COLUMNS.VALUE_TYPE.name()),
+                rs.getInt(VITAL_TABLE_COLUMNS.VALUE.name())));
             hasRes = rs.next();
         }
         rs.close();
@@ -480,9 +591,8 @@ public class DatabaseHelper {
     }
 
     private static class VitalsMapBuffer {
-        
-        private static final Vital.VitalComparator comparator = new Vital.VitalComparator();
 
+        private static final Vital.VitalComparator comparator = new Vital.VitalComparator();
         private static final Integer ENTRY_CAPACITY = 100;
         private static final Integer ENTRY_CAPACITY_FRACTION = 50;
         private HashMap<Integer, ArrayList<Vital>> buffer;
@@ -505,11 +615,11 @@ public class DatabaseHelper {
             if (vitals.size() >= ENTRY_CAPACITY) {
                 vitals.remove(0);
             }
-                return vitals.add(v);
+            return vitals.add(v);
         }
 
         private List<Vital> getVitalsAfterTime(Integer pid, Long vidi) {
-            ArrayList<Vital> bufferedVitals = (ArrayList<Vital>)buffer.get(pid).clone();
+            ArrayList<Vital> bufferedVitals = (ArrayList<Vital>) buffer.get(pid).clone();
             ArrayList<Vital> newVitals = new ArrayList<Vital>(ENTRY_CAPACITY_FRACTION);
             if (bufferedVitals != null) {
                 Collections.sort(bufferedVitals, comparator);
@@ -524,8 +634,8 @@ public class DatabaseHelper {
                     tf = newVitals.get(numVitals - 1).sensor_timestamp;
                 }
                 log.debug("Found " + newVitals.size() + " out of " + bufferedVitals.size()
-                          + " buffered vitals after time " + vidi
-                          + " with a min difference of " + (tf - vidi) + ".");
+                    + " buffered vitals after time " + vidi
+                    + " with a min difference of " + (tf - vidi) + ".");
             }
             return newVitals;
         }

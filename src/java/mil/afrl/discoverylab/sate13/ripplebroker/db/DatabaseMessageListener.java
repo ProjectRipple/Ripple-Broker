@@ -79,19 +79,6 @@ public class DatabaseMessageListener implements Observer {
 
             databaseHelper.bufferPatient(v.pid);
 
-            // initalize columns in list
-            //dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.PID, "" + v.pid));
-            //dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, Reference.datetimeFormat.format(v.server_timestamp)));
-            //dataCols.add(new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TYPE, v.sensor_type));
-            // save reference to these columns as they will change during below loop
-            //Entry<Reference.TableColumns, String> sensorTimestampEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + v.sensor_timestamp);
-            //Entry<Reference.TableColumns, String> valueEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.VALUE, "");
-            //Entry<Reference.TableColumns, String> valueTypeEntry = new SimpleEntry<Reference.TableColumns, String>(VITAL_TABLE_COLUMNS.VALUE_TYPE, "");
-
-            //dataCols.add(sensorTimestampEntry);
-            //dataCols.add(valueEntry);
-            //dataCols.add(valueTypeEntry);
-
             List<RippleData> data = msg.getData();
 
             // Determine data type
@@ -121,47 +108,55 @@ public class DatabaseMessageListener implements Observer {
                     }
                     break;
                 case SENSOR_ECG:
-//                    valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_ECG.getValue());
-                    List<Map<Reference.TableColumns, String>> rows = new ArrayList<Map<Reference.TableColumns, String>>();
-                    Map<Reference.TableColumns, String> curRow;
-                    List<Reference.TableColumns> columns = new ArrayList<Reference.TableColumns>();
+//                    List<Map<Reference.TableColumns, String>> rows = new ArrayList<Map<Reference.TableColumns, String>>();
+//                    Map<Reference.TableColumns, String> curRow;
+//                    List<Reference.TableColumns> columns = new ArrayList<Reference.TableColumns>();
 
                     // Initialize some strings that are the same for all rows
                     v.server_timestamp = msg.getSystemTime();
                     v.sensor_type = "" + msg.getSensorType().getValue();
                     v.value_type = "" + VITAL_TYPES.VITAL_ECG.getValue();
 
-                    String pid = "" + v.pid;
-                    String serverTime = Reference.datetimeFormat.format(v.server_timestamp);
+//                    String pid = "" + v.pid;
+//                    String serverTime = Reference.datetimeFormat.format(v.server_timestamp);
 
                     // Add columns to list
-                    columns.add(VITAL_TABLE_COLUMNS.PID);
-                    columns.add(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP);
-                    columns.add(VITAL_TABLE_COLUMNS.SENSOR_TYPE);
-                    columns.add(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP);
-                    columns.add(VITAL_TABLE_COLUMNS.VALUE);
-                    columns.add(VITAL_TABLE_COLUMNS.VALUE_TYPE);
+//                    columns.add(VITAL_TABLE_COLUMNS.PID);
+//                    columns.add(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP);
+//                    columns.add(VITAL_TABLE_COLUMNS.SENSOR_TYPE);
+//                    columns.add(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP);
+//                    columns.add(VITAL_TABLE_COLUMNS.VALUE);
+//                    columns.add(VITAL_TABLE_COLUMNS.VALUE_TYPE);
 
+                    // array for blob values
+                    int[] values = new int[data.size()];
+                    int counter = 0;
+                    
                     // input entries
                     for (RippleData value : data) {
                         v.sensor_timestamp = ((ECGData) value).sampleTime;
                         v.value = ((ECGData) value).adcReading;
                         databaseHelper.bufferVital(v);
 
+                        values[counter] = v.value;
+                        counter++;
+                        
                         // TODO: convert ADC value to mV? Where?
-                        //valueEntry.setValue("" + ((ECGData) value).adcReading);
-                        //sensorTimestampEntry.setValue("" + ((ECGData) value).sampleTime);
-                        //this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, dataCols);
-                        curRow = new HashMap<Reference.TableColumns, String>();
-                        curRow.put(VITAL_TABLE_COLUMNS.PID, pid);
-                        curRow.put(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, serverTime);
-                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TYPE, v.sensor_type);
-                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + v.sensor_timestamp);
-                        curRow.put(VITAL_TABLE_COLUMNS.VALUE, "" + v.value);
-                        curRow.put(VITAL_TABLE_COLUMNS.VALUE_TYPE, v.value_type);
-                        rows.add(curRow);
+                        // Removed below because of change to blob
+//                        curRow = new HashMap<Reference.TableColumns, String>();
+//                        curRow.put(VITAL_TABLE_COLUMNS.PID, pid);
+//                        curRow.put(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, serverTime);
+//                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TYPE, v.sensor_type);
+//                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + v.sensor_timestamp);
+//                        curRow.put(VITAL_TABLE_COLUMNS.VALUE, "" + v.value);
+//                        curRow.put(VITAL_TABLE_COLUMNS.VALUE_TYPE, v.value_type);
+//                        rows.add(curRow);
                     }
-                    this.databaseHelper.bulkInsert(Reference.TABLE_NAMES.VITAL, columns, rows);
+//                    this.databaseHelper.bulkInsert(Reference.TABLE_NAMES.VITAL, columns, rows);
+                    
+                    // TODO: remove hardcoded period
+                    final int ecgPeriodMs = 5;
+                    this.databaseHelper.insertVitalBlob(v.pid, msg.getSystemTime(), ((ECGData)data.get(0)).sampleTime, msg.getSensorType().getValue(), VITAL_TYPES.VITAL_ECG.getValue(), ecgPeriodMs, values);
                     break;
                 case SENSOR_TEMPERATURE:
                     v.value_type = "" + VITAL_TYPES.VITAL_TEMPERATURE.getValue();

@@ -45,7 +45,7 @@ public class Reference {
 
     public enum TABLE_NAMES {
 
-        PATIENT, VITAL
+        PATIENT, VITAL, VITAL_BLOB
     };
 
     public interface TableColumns {
@@ -87,4 +87,17 @@ public class Reference {
         + "  PRIMARY KEY (vid,pid),"
         + "  FOREIGN KEY (pid) REFERENCES patient (pid)"
         + ");";
+    public static final String VITAL_BLOB_TABLE_CREATE = "CREATE TABLE IF NOT EXISTS vital_blob ("
+        + "  bid int(11) NOT NULL AUTO_INCREMENT,"
+        + "  pid int(11) NOT NULL,"
+        + "  server_timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,"
+        + "  sensor_timestamp bigint(20) unsigned DEFAULT NULL,"
+        + "  sensor_type int unsigned DEFAULT NULL,"
+        + "  value_type int unsigned DEFAULT NULL,"
+        + "  num_samples int unsigned,"
+        + "  period_ms int unsigned,"
+        + "  value BLOB DEFAULT NULL,"
+        + "  PRIMARY KEY (bid,pid),"
+        + "  FOREIGN KEY (pid) REFERENCES patient (pid)"
+        + ") ENGINE=InnoDB;";
 }
