@@ -135,7 +135,7 @@ public class QueryServlet extends HttpServlet {
 
         try {
             Integer pid = Integer.parseInt(pidstr);
-            Integer vidi = Integer.parseInt(vidistr);
+            Long vidi = Long.parseLong(vidistr);
             Integer rowLimit = Integer.parseInt(rlimstr);
             Integer timeLimit = Integer.parseInt(tlimstr);
 

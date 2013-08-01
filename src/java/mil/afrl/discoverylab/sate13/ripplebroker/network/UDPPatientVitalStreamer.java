@@ -28,6 +28,8 @@ public class UDPPatientVitalStreamer {
 
     // Map of patients to subscriber lists
     private Map<Integer, List<InetSocketAddress>> subscriberMap = new HashMap<Integer, List<InetSocketAddress>>();
+    // Map of patient to timestamp of last streamed data
+    private Map<Integer, Long> lastSendMap = new HashMap<Integer, Long>();
     // Socket
     private DatagramSocket socket = null;
     // Timer for sending data
@@ -52,8 +54,12 @@ public class UDPPatientVitalStreamer {
             // Add patient if not in table
             if (!this.subscriberMap.containsKey(patient)) {
                 this.subscriberMap.put(patient, new ArrayList<InetSocketAddress>());
+                this.lastSendMap.put(patient, 0L);
             }
-            this.subscriberMap.get(patient).add(subscriber);
+            // Only add each subscriber once
+            if (!this.subscriberMap.get(patient).contains(subscriber)) {
+                this.subscriberMap.get(patient).add(subscriber);
+            }
         }
     }
 
@@ -131,6 +137,8 @@ public class UDPPatientVitalStreamer {
 
     private class sendTask extends TimerTask {
 
+        private final Vital[] referenceArray = new Vital[1];
+
         public sendTask() {
         }
 
@@ -144,6 +152,8 @@ public class UDPPatientVitalStreamer {
                 DatagramPacket sendPacket = new DatagramPacket(new byte[1], 1);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 oos = new ObjectOutputStream(baos);
+                Long lastSend = 0L;
+                Long newLastSend = 0L;
                 byte[] vitalsByteArray = null;
                 // Iterate through current patients
                 for (Integer p : subscriberMap.keySet()) {
@@ -152,20 +162,34 @@ public class UDPPatientVitalStreamer {
                     // check that there is atleast 1 sub
                     if (!subs.isEmpty()) {
                         // get vitals for patient
-                        vitals = dbhelper.getBufferedVitalsForPatient(p, 0, 100, 0);
-                        // serialize object
-                        oos.writeObject(vitals);
-                        oos.flush();
-                        // Get byte array of serialized objects
-                        vitalsByteArray = baos.toByteArray();
-                        // set packet data
-                        sendPacket.setData(vitalsByteArray, 0, vitalsByteArray.length);
-                        // send to all subs
-                        for (InetSocketAddress sub : subs) {
-                            // set socket for receiver
-                            sendPacket.setSocketAddress(sub);
-                            // send packet
-                            socket.send(sendPacket);
+                        lastSend = lastSendMap.get(p);
+                        vitals = dbhelper.getBufferedVitalsForPatient(p, lastSend, 100, 0);
+                        // set new last send timestamp
+                        if (!vitals.isEmpty()) {
+
+                            newLastSend = vitals.get(vitals.size() - 1).sensor_timestamp;
+                            lastSendMap.remove(p);
+                            lastSendMap.put(p, newLastSend);
+                            // serialize objects
+                            // write size first
+                            oos.writeInt(vitals.size());
+//                        for(Vital v : vitals){
+//                            oos.writeObject(v);
+//                        }
+                            // write as an array of type Vital[]
+                            oos.writeObject(vitals.toArray(this.referenceArray));
+                            oos.flush();
+                            // Get byte array of serialized objects
+                            vitalsByteArray = baos.toByteArray();
+                            // set packet data
+                            sendPacket.setData(vitalsByteArray, 0, vitalsByteArray.length);
+                            // send to all subs
+                            for (InetSocketAddress sub : subs) {
+                                // set socket for receiver
+                                sendPacket.setSocketAddress(sub);
+                                // send packet
+                                socket.send(sendPacket);
+                            }
                         }
                         // clear stream
                         baos.reset();

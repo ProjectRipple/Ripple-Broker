@@ -475,14 +475,16 @@ public class DatabaseHelper {
         return vmb.addVital(v.clone());
     }
 
-    public List<Vital> getBufferedVitalsForPatient(Integer pid, Integer vidi, Integer rowLimit, Integer timeLimit) {
+    public List<Vital> getBufferedVitalsForPatient(Integer pid, Long vidi, Integer rowLimit, Integer timeLimit) {
         return vmb.getVitalsAfterTime(pid, vidi);
     }
 
     private static class VitalsMapBuffer {
+        
+        private static final Vital.VitalComparator comparator = new Vital.VitalComparator();
 
-        private final Integer ENTRY_CAPACITY = 100;
-        private final Integer ENTRY_CAPACITY_FRACTION = 50;
+        private static final Integer ENTRY_CAPACITY = 100;
+        private static final Integer ENTRY_CAPACITY_FRACTION = 50;
         private HashMap<Integer, ArrayList<Vital>> buffer;
 
         public VitalsMapBuffer() {
@@ -503,14 +505,14 @@ public class DatabaseHelper {
             if (vitals.size() >= ENTRY_CAPACITY) {
                 vitals.remove(0);
             }
-            return vitals.add(v);
+                return vitals.add(v);
         }
 
-        private List<Vital> getVitalsAfterTime(Integer pid, Integer vidi) {
-            ArrayList<Vital> bufferedVitals = buffer.get(pid);
+        private List<Vital> getVitalsAfterTime(Integer pid, Long vidi) {
+            ArrayList<Vital> bufferedVitals = (ArrayList<Vital>)buffer.get(pid).clone();
             ArrayList<Vital> newVitals = new ArrayList<Vital>(ENTRY_CAPACITY_FRACTION);
             if (bufferedVitals != null) {
-                Collections.sort(bufferedVitals, new Vital.VitalComparator());
+                Collections.sort(bufferedVitals, comparator);
                 Long tf = 0L;
                 for (Vital v : bufferedVitals) {
                     if (v != null && v.sensor_timestamp > vidi) {
