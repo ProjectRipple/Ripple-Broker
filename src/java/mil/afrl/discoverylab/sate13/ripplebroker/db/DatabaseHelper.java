@@ -103,12 +103,12 @@ public class DatabaseHelper {
 
         // Make sure tables exist
         this.createTables();
-        
-//        int[] test = selectVitalBlobTest(2,1,1);
-//        for(int i: test){
+
+//        int[] test = this.selectVitalBlobTest(2, 1, 1);
+//        for (int i : test) {
 //            System.out.println("Value: " + i);
 //        }
-        
+
 
     }
 
@@ -308,7 +308,7 @@ public class DatabaseHelper {
     }
 
     public void insertVitalBlob(int pid, Date serverTime, long sensorTime, int sensorType, int valueType, int period, int[] values) {
-        
+
         Connection conn = null;
         PreparedStatement pStatement = null;
         try {
@@ -352,8 +352,8 @@ public class DatabaseHelper {
             }
         }
     }
-    
-    public int[] selectVitalBlobTest(int pid, int sensorType, int valueType) {
+
+    public final int[] selectVitalBlobTest(int pid, int sensorType, int valueType) {
         int[] result = null;
         Connection conn = null;
         PreparedStatement pStatement = null;
@@ -368,17 +368,19 @@ public class DatabaseHelper {
             pStatement.setInt(3, valueType);
             // execute statement
             ResultSet rs = pStatement.executeQuery();
-            if(rs.first()){
-                byte[] bArray = new byte[rs.getInt("num_samples")];
-                rs.getBinaryStream("value").read(bArray);
-                result = ByteBuffer.wrap(bArray).order(ByteOrder.BIG_ENDIAN).asIntBuffer().array();
-                
+            if (rs.first()) {
+                byte[] bArray = rs.getBytes("value");
+                IntBuffer intBuf =
+                    ByteBuffer.wrap(bArray)
+                    .order(ByteOrder.BIG_ENDIAN)
+                    .asIntBuffer();
+                result = new int[intBuf.remaining()];
+                intBuf.get(result);
+
             }
 
         } catch (SQLException ex) {
             log.error(DatabaseHelper.class.getName() + ":Error inserting blob", ex);
-        } catch (IOException ex) {
-            log.error(DatabaseHelper.class.getName() + ":Error reading stream", ex);
         } finally {
             try {
                 if (pStatement != null) {
