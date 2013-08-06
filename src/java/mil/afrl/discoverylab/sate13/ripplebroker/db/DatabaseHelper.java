@@ -461,6 +461,7 @@ public class DatabaseHelper {
          * where (m.mst - v.sensor_timestamp) < 10000
          */
 
+        // TODO: use a PreparedStatement instead of just string
         String query = "select vid, pid, server_timestamp, sensor_timestamp, sensor_type, value_type, value "
             + "from vital v, "
             + "(select max(sensor_timestamp) as mst from vital where pid = " + pid + ") m "
@@ -470,24 +471,6 @@ public class DatabaseHelper {
         if (rowLimit > 0) {
             query += " LIMIT " + rowLimit;
         }
-
-//        StringBuilder q = new StringBuilder("SELECT * FROM ");
-//        q.append(Reference.TABLE_NAMES.VITAL.toString().toLowerCase());
-//        q.append(" WHERE ");
-//        q.append(Reference.VITAL_TABLE_COLUMNS.PID.name());
-//        q.append(" = ");
-//        q.append(pid);
-//        q.append(" AND ");
-//        q.append(Reference.VITAL_TABLE_COLUMNS.VID.name());
-//        q.append(" >= ");
-//        q.append(vidi);
-//        q.append(" ORDER BY ");
-//        q.append(Reference.VITAL_TABLE_COLUMNS.VID.name());
-//        if (limit > 0) {
-//            q.append(" LIMIT ");
-//            q.append(limit);
-//        }
-//        query = q.toString();
 
         log.debug("Querying vitals for Patient: " + pid + ", vidi: " + vidi
             + ", rowlimit: " + rowLimit + ", timeLimit:" + timeLimit);
@@ -594,12 +577,18 @@ public class DatabaseHelper {
 
     private static class VitalsMapBuffer {
 
+        // Comparator for vital objects
         private static final Vital.VitalComparator comparator = new Vital.VitalComparator();
+        // Capacity constants
         private static final Integer ENTRY_CAPACITY = 100;
         private static final Integer ENTRY_CAPACITY_FRACTION = 50;
+        // Actual buffer
         private HashMap<Integer, ArrayList<Vital>> buffer;
+        // current buffered vitals
+        private List<Vital> bufferedVitals = new ArrayList<Vital>(ENTRY_CAPACITY);
 
         public VitalsMapBuffer() {
+            // init buffer
             buffer = new HashMap<Integer, ArrayList<Vital>>();
         }
 
@@ -620,24 +609,33 @@ public class DatabaseHelper {
             return vitals.add(v);
         }
 
-        private List<Vital> getVitalsAfterTime(Integer pid, Long vidi) {
-            ArrayList<Vital> bufferedVitals = (ArrayList<Vital>) buffer.get(pid).clone();
+        private synchronized List<Vital> getVitalsAfterTime(Integer pid, Long vidi) {
+            
             ArrayList<Vital> newVitals = new ArrayList<Vital>(ENTRY_CAPACITY_FRACTION);
-            if (bufferedVitals != null) {
+            // check that patient is in buffer
+            if(buffer.containsKey(pid)){
+                // use instance list(rather than original) to avoid concurrent modification on original list
+                // the instance variable can be used because method is synchronized
+                // The use of an instance variable is to prevent extra object creation(such as through cloning or copy constructor)
+                bufferedVitals.addAll(buffer.get(pid));
+                // sort the vitals
                 Collections.sort(bufferedVitals, comparator);
                 Long tf = 0L;
+                // Pull all vitals matching after specified time
                 for (Vital v : bufferedVitals) {
                     if (v != null && v.sensor_timestamp > vidi) {
                         newVitals.add(v);
                     }
                 }
-                int numVitals = newVitals.size();
-                if (numVitals > 0) {
-                    tf = newVitals.get(numVitals - 1).sensor_timestamp;
-                }
-                log.debug("Found " + newVitals.size() + " out of " + bufferedVitals.size()
-                    + " buffered vitals after time " + vidi
-                    + " with a min difference of " + (tf - vidi) + ".");
+                // debugging statements
+//                int numVitals = newVitals.size();
+//                if (numVitals > 0) {
+//                    tf = newVitals.get(numVitals - 1).sensor_timestamp;
+//                }
+                log.debug("Found " + newVitals.size() + " out of " + bufferedVitals.size() + " buffered vitals after time " + vidi);
+//                log.debug("Found " + newVitals.size() + " out of " + bufferedVitals.size()
+//                    + " buffered vitals after time " + vidi
+//                    + " with a min difference of " + (tf - vidi) + ".");
             }
             return newVitals;
         }
