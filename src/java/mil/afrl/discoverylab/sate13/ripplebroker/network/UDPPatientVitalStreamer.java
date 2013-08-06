@@ -144,6 +144,7 @@ public class UDPPatientVitalStreamer {
 
         @Override
         public void run() {
+//            log.debug(this.getClass().getName() + " Timer triggered");
             ObjectOutputStream oos = null;
             try {
                 // Initialize local variables
@@ -157,6 +158,7 @@ public class UDPPatientVitalStreamer {
                 byte[] vitalsByteArray = null;
                 // Iterate through current patients
                 for (Integer p : subscriberMap.keySet()) {
+//                    log.debug(this.getClass().getName() + " patient: " + p);
                     // get subs for this patient
                     subs = subscriberMap.get(p);
                     // check that there is atleast 1 sub
@@ -173,9 +175,6 @@ public class UDPPatientVitalStreamer {
                             // serialize objects
                             // write size first
                             oos.writeInt(vitals.size());
-//                        for(Vital v : vitals){
-//                            oos.writeObject(v);
-//                        }
                             // write as an array of type Vital[]
                             oos.writeObject(vitals.toArray(this.referenceArray));
                             oos.flush();

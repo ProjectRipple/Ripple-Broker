@@ -49,7 +49,7 @@
     <context-param>
         <description>Network Interface name to join multicast group on</description>
         <param-name>mcast.interface</param-name>
-        <param-value>wlan0</param-value>
+        <param-value>eth0</param-value>
     </context-param>
     <listener>
         <listener-class>mil.afrl.discoverylab.sate13.ripplebroker.BrokerContextListener</listener-class>
