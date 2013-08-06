@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import mil.afrl.discoverylab.sate13.ripple.data.model.MultiValueVital;
 import mil.afrl.discoverylab.sate13.ripple.data.model.Patient;
 import mil.afrl.discoverylab.sate13.ripple.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.network.UDPListenerObservation;
@@ -70,105 +71,111 @@ public class DatabaseMessageListener implements Observer {
                 //dataCols.clear();
             }
             // get their id
-            // TODO: just use getPatientId as an exists method? (<0 = not exists?)
-            Vital v = new Vital();
-            v.pid = this.databaseHelper.getPatientId(srcAddr.getAddress());
-            v.server_timestamp = msg.getSystemTime();
-            v.sensor_timestamp = msg.getTimestamp();
-            v.sensor_type = "" + msg.getSensorType().getValue();
+//            Vital v = new Vital();
+//            v.pid = this.databaseHelper.getPatientId(srcAddr.getAddress());
+//            v.server_timestamp = msg.getSystemTime();
+//            v.sensor_timestamp = msg.getTimestamp();
+//            v.sensor_type = "" + msg.getSensorType().getValue();
 
-            databaseHelper.bufferPatient(v.pid);
+            MultiValueVital vital = new MultiValueVital();
+            vital.pid = this.databaseHelper.getPatientId(srcAddr.getAddress());
+            vital.server_timestamp = msg.getSystemTime();
+            vital.sensor_timestamp = msg.getTimestamp();
+            vital.sensor_type = msg.getSensorType().getValue();
+
+
+            databaseHelper.bufferPatient(vital.pid);
 
             List<RippleData> data = msg.getData();
+            int counter = 0;
 
             // Determine data type
             switch (msg.getSensorType()) {
                 case SENSOR_PULSE_OX:
+
+                    int[] sp02Values = new int[data.size()];
+                    int[] pulseValues = new int[data.size()];
+                    // TODO: assume only one value per message for now
                     for (RippleData value : data) {
 
                         // Set timestamp for samples
-                        v.sensor_timestamp = ((PulseOxData) value).sampleTime;
-                        //sensorTimestampEntry.setValue("" + ((PulseOxData) value).sampleTime);
+                        vital.sensor_timestamp = ((PulseOxData) value).sampleTime;
 
-                        v.value_type = "" + VITAL_TYPES.VITAL_PULSE.getValue();
-                        //valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_PULSE.getValue());
-                        v.value = ((PulseOxData) value).pulse;
-                        //valueEntry.setValue("" + ((PulseOxData) value).pulse);
+                        vital.value_type = VITAL_TYPES.VITAL_PULSE.getValue();
+                        pulseValues[counter] = ((PulseOxData) value).pulse;
+                        vital.period_ms = msg.getPeriodMs();
+                        vital.values = pulseValues;
+                        
+                        databaseHelper.bufferMultiValueVital(vital);
+                        this.databaseHelper.insertVitalBlob(vital.pid, vital.server_timestamp, vital.sensor_timestamp, vital.sensor_type, vital.value_type, vital.period_ms, pulseValues);
 
-                        databaseHelper.bufferVital(v);
-                        databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
 
-                        v.value_type = "" + VITAL_TYPES.VITAL_BLOOD_OX.getValue();
-                        //valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_BLOOD_OX.getValue());
-                        v.value = ((PulseOxData) value).bloodOxygen;
-                        //valueEntry.setValue("" + ((PulseOxData) value).bloodOxygen);
+//                        databaseHelper.bufferVital(v);
+//                        databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
 
-                        databaseHelper.bufferVital(v);
-                        databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
+                        vital.value_type = VITAL_TYPES.VITAL_BLOOD_OX.getValue();
+                        sp02Values[counter] = ((PulseOxData) value).bloodOxygen;
+                        vital.values = sp02Values;
+                        
+                        databaseHelper.bufferMultiValueVital(vital);
+
+//                        databaseHelper.bufferVital(v);
+//                        databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
+                        this.databaseHelper.insertVitalBlob(vital.pid, vital.server_timestamp, vital.sensor_timestamp, vital.sensor_type, vital.value_type, vital.period_ms, sp02Values);
+
                     }
                     break;
                 case SENSOR_ECG:
-//                    List<Map<Reference.TableColumns, String>> rows = new ArrayList<Map<Reference.TableColumns, String>>();
-//                    Map<Reference.TableColumns, String> curRow;
-//                    List<Reference.TableColumns> columns = new ArrayList<Reference.TableColumns>();
 
                     // Initialize some strings that are the same for all rows
-                    v.server_timestamp = msg.getSystemTime();
-                    v.sensor_type = "" + msg.getSensorType().getValue();
-                    v.value_type = "" + VITAL_TYPES.VITAL_ECG.getValue();
-
-//                    String pid = "" + v.pid;
-//                    String serverTime = Reference.datetimeFormat.format(v.server_timestamp);
-
-                    // Add columns to list
-//                    columns.add(VITAL_TABLE_COLUMNS.PID);
-//                    columns.add(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP);
-//                    columns.add(VITAL_TABLE_COLUMNS.SENSOR_TYPE);
-//                    columns.add(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP);
-//                    columns.add(VITAL_TABLE_COLUMNS.VALUE);
-//                    columns.add(VITAL_TABLE_COLUMNS.VALUE_TYPE);
+                    vital.server_timestamp = msg.getSystemTime();
+                    vital.sensor_type = msg.getSensorType().getValue();
+                    vital.value_type = VITAL_TYPES.VITAL_ECG.getValue();
+                    vital.sensor_timestamp = ((ECGData) data.get(0)).sampleTime;
+                    vital.period_ms = msg.getPeriodMs();
 
                     // array for blob values
                     int[] values = new int[data.size()];
-                    int counter = 0;
-                    
+                    counter = 0;
+
                     // input entries
                     for (RippleData value : data) {
-                        v.sensor_timestamp = ((ECGData) value).sampleTime;
-                        v.value = ((ECGData) value).adcReading;
-                        databaseHelper.bufferVital(v);
+//                        v.sensor_timestamp = ((ECGData) value).sampleTime;
+//                        v.value = ((ECGData) value).adcReading;
+//                        databaseHelper.bufferVital(v);
 
-                        values[counter] = v.value;
+                        values[counter] = ((ECGData) value).adcReading;//v.value;
                         counter++;
-                        
+
                         // TODO: convert ADC value to mV? Where?
-                        // Removed below because of change to blob
-//                        curRow = new HashMap<Reference.TableColumns, String>();
-//                        curRow.put(VITAL_TABLE_COLUMNS.PID, pid);
-//                        curRow.put(VITAL_TABLE_COLUMNS.SERVER_TIMESTAMP, serverTime);
-//                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TYPE, v.sensor_type);
-//                        curRow.put(VITAL_TABLE_COLUMNS.SENSOR_TIMESTAMP, "" + v.sensor_timestamp);
-//                        curRow.put(VITAL_TABLE_COLUMNS.VALUE, "" + v.value);
-//                        curRow.put(VITAL_TABLE_COLUMNS.VALUE_TYPE, v.value_type);
-//                        rows.add(curRow);
                     }
-//                    this.databaseHelper.bulkInsert(Reference.TABLE_NAMES.VITAL, columns, rows);
+                    vital.values = values;
+                    this.databaseHelper.bufferMultiValueVital(vital);
                     
                     // TODO: remove hardcoded period
-                    final int ecgPeriodMs = 5;
-                    this.databaseHelper.insertVitalBlob(v.pid, msg.getSystemTime(), ((ECGData)data.get(0)).sampleTime, msg.getSensorType().getValue(), VITAL_TYPES.VITAL_ECG.getValue(), ecgPeriodMs, values);
+//                    final int ecgPeriodMs = msg.getPeriodMs();
+                    this.databaseHelper.insertVitalBlob(vital.pid, vital.server_timestamp, vital.sensor_timestamp, vital.sensor_type, vital.value_type, vital.period_ms, values);
                     break;
                 case SENSOR_TEMPERATURE:
-                    v.value_type = "" + VITAL_TYPES.VITAL_TEMPERATURE.getValue();
-                    //valueTypeEntry.setValue("" + VITAL_TYPES.VITAL_TEMPERATURE.getValue());
+                    vital.value_type = VITAL_TYPES.VITAL_TEMPERATURE.getValue();
+                    vital.sensor_timestamp = ((TemperatureData) data.get(0)).sampleTime;
+                    vital.period_ms = msg.getPeriodMs();
+
+                    int[] temperatureValues = new int[data.size()];
+                    counter = 0;
+                    
                     for (RippleData value : data) {
-                        v.value = ((TemperatureData) value).temperature;
-                        //valueEntry.setValue("" + ((TemperatureData) value).temperature);
-                        v.sensor_timestamp = ((TemperatureData) value).sampleTime;
-                        //sensorTimestampEntry.setValue("" + ((TemperatureData) value).sampleTime);
-                        databaseHelper.bufferVital(v);
-                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
+//                        vital.value = ((TemperatureData) value).temperature;
+                        temperatureValues[counter] = ((TemperatureData) value).temperature;
+                        counter++;
+                        
+//                        v.sensor_timestamp = ((TemperatureData) value).sampleTime;
+//                        databaseHelper.bufferVital(v);
+//                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
                     }
+                    this.databaseHelper.bufferMultiValueVital(vital);
+                    this.databaseHelper.insertVitalBlob(vital.pid, vital.server_timestamp, vital.sensor_timestamp, vital.sensor_type, vital.value_type, vital.period_ms, temperatureValues);
+                    
                     break;
                 default:
                     throw new AssertionError(msg.getSensorType().name());

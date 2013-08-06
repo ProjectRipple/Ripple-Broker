@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import mil.afrl.discoverylab.sate13.ripple.data.model.MultiValueVital;
 import mil.afrl.discoverylab.sate13.ripple.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.db.DatabaseHelper;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
@@ -137,7 +138,8 @@ public class UDPPatientVitalStreamer {
 
     private class sendTask extends TimerTask {
 
-        private final Vital[] referenceArray = new Vital[1];
+//        private final Vital[] referenceArray = new Vital[1];
+        private final MultiValueVital[] referenceArray = new MultiValueVital[1];
 
         public sendTask() {
         }
@@ -148,7 +150,8 @@ public class UDPPatientVitalStreamer {
             ObjectOutputStream oos = null;
             try {
                 // Initialize local variables
-                List<Vital> vitals = null;
+//                List<Vital> vitals = null;
+                List<MultiValueVital> vitals = null;
                 List<InetSocketAddress> subs = null;
                 DatagramPacket sendPacket = new DatagramPacket(new byte[1], 1);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -165,7 +168,8 @@ public class UDPPatientVitalStreamer {
                     if (!subs.isEmpty()) {
                         // get vitals for patient
                         lastSend = lastSendMap.get(p);
-                        vitals = dbhelper.getBufferedVitalsForPatient(p, lastSend, 100, 0);
+//                        vitals = dbhelper.getBufferedVitalsForPatient(p, lastSend, 100, 0);
+                        vitals = dbhelper.getBufferedMultiValueVitalsForPatient(p, lastSend, 30);
                         // set new last send timestamp
                         if (!vitals.isEmpty()) {
 

@@ -20,6 +20,7 @@ public class RippleMoteMessage {
     private int overflowCount;
     private Date systemTime;
     private Reference.SENSOR_TYPES sensorType;
+    private int periodMs;
     private List<RippleData> data;
     // Logger
     private static Logger log = Logger.getLogger(Config.LOGGER_NAME);
@@ -97,6 +98,7 @@ public class RippleMoteMessage {
             int spo2SamplePeriod = 0; 
             spo2SamplePeriod |= (message[INDEX_PULSE_OX_PERIOD] & 0x00ff);
             spo2SamplePeriod = (spo2SamplePeriod << 8) | (message[INDEX_PULSE_OX_PERIOD + 1] & 0x00ff);
+            result.periodMs = spo2SamplePeriod;
             long tSampleTime;
             
             // heart rate
@@ -134,6 +136,7 @@ public class RippleMoteMessage {
             int temperaturePeriod = 0;
             temperaturePeriod |= (message[INDEX_TEMPERATURE_PERIOD] & 0x00ff);
             temperaturePeriod = (temperaturePeriod << 8) | (message[INDEX_TEMPERATURE_PERIOD + 1] & 0x00ff);
+            result.periodMs = temperaturePeriod;
             long tSampleTime;
 
             //log.debug("Reported temperature:");
@@ -164,9 +167,11 @@ public class RippleMoteMessage {
             // got ecg reading message
             int numEcgSamples = (message[INDEX_SAMPLE_COUNT] & 0x00ff);
 
-            int sampleOffsets = (message[INDEX_ECG_PERIOD] & 0xff);
+            int samplePeriod = (message[INDEX_ECG_PERIOD] & 0xff);
             int[] data = new int[numEcgSamples];
             long tSampleTime;
+            
+            result.periodMs = samplePeriod;
 
             //log.debug("Reported ECG:");
             //log.debug("Offset is " + sampleOffsets + " ms");
@@ -176,9 +181,9 @@ public class RippleMoteMessage {
                 data[i] |= (message[buf_count] & 0xff);
                 data[i] = (data[i] << 8) | (message[buf_count + 1] & 0xff);
                 // find samples actual time
-                tSampleTime = (result.timestamp - (sampleOffsets*(numEcgSamples - (i+1))));
+                tSampleTime = (result.timestamp - (samplePeriod*(numEcgSamples - (i+1))));
                 // add to data array
-                tData.add(new ECGData(tSampleTime, sampleOffsets, data[i]));
+                tData.add(new ECGData(tSampleTime, samplePeriod, data[i]));
                 //log.debug("Time: " + ((ECGData)tData.get(tData.size()-1)).sampleTime + " Data: " + data[i]);
             }
 
@@ -231,6 +236,10 @@ public class RippleMoteMessage {
      */
     public List<RippleData> getData() {
         return data;
+    }
+
+    public int getPeriodMs() {
+        return periodMs;
     }
 
     // Container classes for data points

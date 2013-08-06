@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import javax.servlet.ServletContext;
 import javax.sql.rowset.CachedRowSet;
 import javax.sql.rowset.RowSetProvider;
+import mil.afrl.discoverylab.sate13.ripple.data.model.MultiValueVital;
 import mil.afrl.discoverylab.sate13.ripple.data.model.Patient;
 import mil.afrl.discoverylab.sate13.ripple.data.model.Vital;
 import mil.afrl.discoverylab.sate13.ripplebroker.util.Config;
@@ -61,6 +62,7 @@ public class DatabaseHelper {
     private final Object lock = new Object();
     // Buffer
     private static VitalsMapBuffer vmb = new VitalsMapBuffer();
+    private static MultiValueVitalsMapBuffer mvvmb = new MultiValueVitalsMapBuffer();
 
     /**
      * Get current instance of database helper
@@ -564,17 +566,95 @@ public class DatabaseHelper {
      * Buffering Related methods and class
      */
     public boolean bufferPatient(Integer pid) {
-        return vmb.addPatient(pid);
+//        return vmb.addPatient(pid);
+        return mvvmb.addPatient(pid);
     }
 
     public boolean bufferVital(Vital v) {
         return vmb.addVital(v.clone());
     }
+    
+    public boolean bufferMultiValueVital(MultiValueVital mvv){
+        return mvvmb.addVital(mvv.clone());
+    }
 
     public List<Vital> getBufferedVitalsForPatient(Integer pid, Long vidi, Integer rowLimit, Integer timeLimit) {
         return vmb.getVitalsAfterTime(pid, vidi);
     }
+    
+    public List<MultiValueVital> getBufferedMultiValueVitalsForPatient(Integer pid, Long vidi, Integer rowLimit) {
+        return mvvmb.getVitalsAfterTime(pid, vidi);
+    }
 
+    private static class MultiValueVitalsMapBuffer {
+
+        // Comparator for vital objects
+        private static final MultiValueVital.VitalComparator comparator = new MultiValueVital.VitalComparator();
+        // Capacity constants
+        private static final Integer ENTRY_CAPACITY = 30;
+        private static final Integer ENTRY_CAPACITY_FRACTION = 20;
+        // Actual buffer
+        private HashMap<Integer, ArrayList<MultiValueVital>> buffer;
+        // current buffered vitals
+        private List<MultiValueVital> bufferedVitals = new ArrayList<MultiValueVital>(ENTRY_CAPACITY);
+
+        public MultiValueVitalsMapBuffer() {
+            // init buffer
+            buffer = new HashMap<Integer, ArrayList<MultiValueVital>>();
+        }
+
+        public synchronized boolean addPatient(Integer pid) {
+            if (!buffer.containsKey(pid)) {
+                buffer.put(pid, new ArrayList<MultiValueVital>(ENTRY_CAPACITY));
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        private synchronized boolean addVital(MultiValueVital v) {
+            ArrayList<MultiValueVital> vitals = buffer.get(v.pid);
+            if (vitals.size() >= ENTRY_CAPACITY) {
+                vitals.remove(0);
+            }
+            return vitals.add(v);
+        }
+
+        private synchronized List<MultiValueVital> getVitalsAfterTime(Integer pid, Long vidi) {
+            
+            ArrayList<MultiValueVital> newVitals = new ArrayList<MultiValueVital>(ENTRY_CAPACITY_FRACTION);
+            // check that patient is in buffer
+            if(buffer.containsKey(pid)){
+                // use instance list(rather than original) to avoid concurrent modification on original list
+                // the instance variable can be used because method is synchronized
+                // The use of an instance variable is to prevent extra object creation(such as through cloning or copy constructor)
+                bufferedVitals.addAll(buffer.get(pid));
+                // sort the vitals
+                Collections.sort(bufferedVitals, comparator);
+                Long tf = 0L;
+                // Pull all vitals matching after specified time
+                for (MultiValueVital v : bufferedVitals) {
+                    if (v != null && v.sensor_timestamp > vidi) {
+                        newVitals.add(v);
+                    }
+                }
+                // debugging statements
+//                int numVitals = newVitals.size();
+//                if (numVitals > 0) {
+//                    tf = newVitals.get(numVitals - 1).sensor_timestamp;
+//                }
+                log.debug("Found " + newVitals.size() + " out of " + bufferedVitals.size() + " buffered vitals after time " + vidi);
+//                log.debug("Found " + newVitals.size() + " out of " + bufferedVitals.size()
+//                    + " buffered vitals after time " + vidi
+//                    + " with a min difference of " + (tf - vidi) + ".");
+                
+                // Clear buffer object
+                bufferedVitals.clear();
+            }
+            return newVitals;
+        }
+    }
+    
     private static class VitalsMapBuffer {
 
         // Comparator for vital objects

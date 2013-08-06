@@ -95,8 +95,8 @@ public class UDPListener extends Observable implements Runnable {
                 // Clear packet buffer
                 //Arrays.fill(this.receiveBuffer, (byte) 0);
             }
-        } catch (IOException e) {
-            log.debug(e);
+        } catch (Exception e) {
+            log.debug("Exception: ", e);
         } finally {
             log.debug("Stopping run");
             // Make sure socket gets closed
