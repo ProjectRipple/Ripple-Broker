@@ -636,6 +636,9 @@ public class DatabaseHelper {
 //                log.debug("Found " + newVitals.size() + " out of " + bufferedVitals.size()
 //                    + " buffered vitals after time " + vidi
 //                    + " with a min difference of " + (tf - vidi) + ".");
+                
+                // Clear buffer object
+                bufferedVitals.clear();
             }
             return newVitals;
         }
