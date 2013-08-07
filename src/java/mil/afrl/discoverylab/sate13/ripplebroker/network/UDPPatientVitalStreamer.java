@@ -140,6 +140,8 @@ public class UDPPatientVitalStreamer {
 
 //        private final Vital[] referenceArray = new Vital[1];
         private final MultiValueVital[] referenceArray = new MultiValueVital[1];
+        // difference between last send and last buffered value before reseting last send
+        private static final long RESET_TIME_DIFF = 5000;
 
         public sendTask() {
         }
@@ -179,7 +181,7 @@ public class UDPPatientVitalStreamer {
                             // serialize objects
                             // write size first
                             oos.writeInt(vitals.size());
-                            // write as an array of type Vital[]
+                            // write as an array of type MultiValueVital[]
                             oos.writeObject(vitals.toArray(this.referenceArray));
                             oos.flush();
                             // Get byte array of serialized objects
@@ -192,6 +194,13 @@ public class UDPPatientVitalStreamer {
                                 sendPacket.setSocketAddress(sub);
                                 // send packet
                                 socket.send(sendPacket);
+                            }
+                        } else {
+                            // Check timestamp
+                            long bufferedTime = dbhelper.getLastBufferedMultiValueVitalTime(p);
+                            if (lastSend - bufferedTime > RESET_TIME_DIFF) {
+                                lastSendMap.remove(p);
+                                lastSendMap.put(p, bufferedTime);
                             }
                         }
                         // clear stream

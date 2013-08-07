@@ -573,15 +573,19 @@ public class DatabaseHelper {
     public boolean bufferVital(Vital v) {
         return vmb.addVital(v.clone());
     }
-    
-    public boolean bufferMultiValueVital(MultiValueVital mvv){
+
+    public boolean bufferMultiValueVital(MultiValueVital mvv) {
         return mvvmb.addVital(mvv.clone());
+    }
+
+    public synchronized long getLastBufferedMultiValueVitalTime(Integer pid) {
+        return mvvmb.getLastBufferedTime(pid);
     }
 
     public List<Vital> getBufferedVitalsForPatient(Integer pid, Long vidi, Integer rowLimit, Integer timeLimit) {
         return vmb.getVitalsAfterTime(pid, vidi);
     }
-    
+
     public List<MultiValueVital> getBufferedMultiValueVitalsForPatient(Integer pid, Long vidi, Integer rowLimit) {
         return mvvmb.getVitalsAfterTime(pid, vidi);
     }
@@ -620,11 +624,21 @@ public class DatabaseHelper {
             return vitals.add(v);
         }
 
+        private synchronized long getLastBufferedTime(Integer pid) {
+            List<MultiValueVital> vitals = buffer.get(pid);
+            if (vitals.isEmpty()) {
+                return 0L;
+            } else {
+
+                return vitals.get(vitals.size() - 1).sensor_timestamp;
+            }
+        }
+
         private synchronized List<MultiValueVital> getVitalsAfterTime(Integer pid, Long vidi) {
-            
+
             ArrayList<MultiValueVital> newVitals = new ArrayList<MultiValueVital>(ENTRY_CAPACITY_FRACTION);
             // check that patient is in buffer
-            if(buffer.containsKey(pid)){
+            if (buffer.containsKey(pid)) {
                 // use instance list(rather than original) to avoid concurrent modification on original list
                 // the instance variable can be used because method is synchronized
                 // The use of an instance variable is to prevent extra object creation(such as through cloning or copy constructor)
@@ -647,14 +661,14 @@ public class DatabaseHelper {
 //                log.debug("Found " + newVitals.size() + " out of " + bufferedVitals.size()
 //                    + " buffered vitals after time " + vidi
 //                    + " with a min difference of " + (tf - vidi) + ".");
-                
+
                 // Clear buffer object
                 bufferedVitals.clear();
             }
             return newVitals;
         }
     }
-    
+
     private static class VitalsMapBuffer {
 
         // Comparator for vital objects
@@ -690,10 +704,10 @@ public class DatabaseHelper {
         }
 
         private synchronized List<Vital> getVitalsAfterTime(Integer pid, Long vidi) {
-            
+
             ArrayList<Vital> newVitals = new ArrayList<Vital>(ENTRY_CAPACITY_FRACTION);
             // check that patient is in buffer
-            if(buffer.containsKey(pid)){
+            if (buffer.containsKey(pid)) {
                 // use instance list(rather than original) to avoid concurrent modification on original list
                 // the instance variable can be used because method is synchronized
                 // The use of an instance variable is to prevent extra object creation(such as through cloning or copy constructor)
@@ -716,7 +730,7 @@ public class DatabaseHelper {
 //                log.debug("Found " + newVitals.size() + " out of " + bufferedVitals.size()
 //                    + " buffered vitals after time " + vidi
 //                    + " with a min difference of " + (tf - vidi) + ".");
-                
+
                 // Clear buffer object
                 bufferedVitals.clear();
             }
