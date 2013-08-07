@@ -173,6 +173,7 @@ public class DatabaseMessageListener implements Observer {
 //                        databaseHelper.bufferVital(v);
 //                        this.databaseHelper.insertRow(Reference.TABLE_NAMES.VITAL, v.toListEntries());
                     }
+                    vital.values = temperatureValues;
                     this.databaseHelper.bufferMultiValueVital(vital);
                     this.databaseHelper.insertVitalBlob(vital.pid, vital.server_timestamp, vital.sensor_timestamp, vital.sensor_type, vital.value_type, vital.period_ms, temperatureValues);
                     
